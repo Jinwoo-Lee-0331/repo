@@ -1,4 +1,5 @@
 import pymssql
+import pyodbc
 import matplotlib.pyplot as plt
 import pandas as pd
 import streamlit as st
@@ -11,10 +12,24 @@ import matplotlib.dates as mdates
 # font = font_manager.FontProperties(fname=font_path).get_name()
 # rc('font', family=font)
 
+@st.cache_resource
+def init_connection():
+    return pyodbc.connect(
+        "DRIVER={ODBC Driver 17 for SQL Server};SERVER="
+        + st.secrets["server"]
+        + ";DATABASE="
+        + st.secrets["database"]
+        + ";UID="
+        + st.secrets["username"]
+        + ";PWD="
+        + st.secrets["password"]
+    )
+conn = init_connection()
+
 @st.cache_data(ttl=600)
 def runqry(date_i,loc_i):
-    conn = pymssql.connect(server='192.168.210.14', user='hmcportal', password='qwer1234!', database='hmcportal',
-                           charset='utf8')
+    # conn = pymssql.connect(server='192.168.210.14', user='hmcportal', password='qwer1234!', database='hmcportal',
+    #                        charset='utf8')
     cursor = conn.cursor()
     cursor.execute("SELECT Time, TAG, Value FROM [HMCPISVR].[piarchive]..[PICOMP2] WHERE Time > '" + date_i.strftime(
         "%Y-%m-%d") + " 07:00:00' and Time < '" + date_i.strftime("%Y-%m-%d") + " 21:00:00' and tag like '%" + loc_i + "%' order by Time asc")
