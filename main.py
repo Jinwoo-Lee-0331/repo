@@ -7,10 +7,6 @@ import numpy as np
 import datetime
 from streamlit_tree_select import tree_select
 import matplotlib.dates as mdates
-# from matplotlib import font_manager, rc
-# font_path = "C:/Windows/Fonts/batang.ttf"
-# font = font_manager.FontProperties(fname=font_path).get_name()
-# rc('font', family=font)
 
 @st.cache_resource
 def init_connection():
@@ -31,15 +27,20 @@ def runqry(date_i,loc_i):
     # conn = pymssql.connect(server='192.168.210.14', user='hmcportal', password='qwer1234!', database='hmcportal',
     #                        charset='utf8')
     cursor = conn.cursor()
-    cursor.execute("SELECT Time, TAG, Value FROM [HMCPISVR].[piarchive]..[PICOMP2] WHERE Time > '" + date_i.strftime(
-        "%Y-%m-%d") + " 07:00:00' and Time < '" + date_i.strftime("%Y-%m-%d") + " 21:00:00' and tag like '%" + loc_i + "%' order by Time asc")
-    x = pd.DataFrame(cursor, columns=["Time", "TAG", "VAL"])
+    query = "SELECT Time, TAG, Value FROM [HMCPISVR].[piarchive]..[PICOMP2] WHERE Time > '" + date_i.strftime(
+        "%Y-%m-%d") + " 07:00:00' and Time < '" + date_i.strftime("%Y-%m-%d") + " 21:00:00' and tag like '%" + loc_i + "%' order by Time asc"
+    df = pd.read_sql(query, conn)
+    # cursor.execute("SELECT Time, TAG, Value FROM [HMCPISVR].[piarchive]..[PICOMP2] WHERE Time > '" + date_i.strftime(
+    #     "%Y-%m-%d") + " 07:00:00' and Time < '" + date_i.strftime("%Y-%m-%d") + " 21:00:00' and tag like '%" + loc_i + "%' order by Time asc")
+    # x = pd.DataFrame(df, columns=["Time", "TAG", "VAL"])
+    df.columns=["Time", "TAG", "VAL"]
+    x = df
     x = x[x["TAG"].str.contains(r'(OPC UA.(\w+).2.Tags.\w+.\w+.(\w+)-(\w-\d\w)-(.+))')]
     y = pd.concat([pd.to_datetime(x["Time"]), x["TAG"].str.extract(r'OPC UA.(\w+).2.Tags.\w+.\w+.(\w+)-(\w-\d\w)-(.+)'), x["VAL"].astype('float')],
                   axis=1)
     y.columns = ["Time", "Location", "Attribute", "Serial", "TAG", "Value"]
     # 연결 끊기
-    conn.close()
+    # conn.close()
     return y
 
 if 'key' not in st.session_state:
@@ -73,17 +74,17 @@ if st.sidebar.button(label="Plot"):
     # y2["Time"]=y2["Time"].strftime("%H:%M")
     grouped_y = y2.groupby("TAG")
     plt.rc('font', family='Malgun Gothic')
-    plt.xticks(np.arange(min(y["Time"]), max(y["Time"]),datetime.timedelta(hours=2)))
-    plt.yticks(np.arange(min(y["Value"]), min(y["Value"]),0.2*(max(y["Value"])-min(y["Value"]))))
+    plt.xticks(np.arange(min(y2["Time"]), max(y2["Time"]),datetime.timedelta(hours=2)))
+    # plt.yticks(np.arange(min(y2["Value"]), max(y2["Value"]),0.2*(max(y2["Value"])-min(y2["Value"]))))
     fig, ax = plt.subplots()
-    z=[""]
+    z=[]
     for group_name, group_data in grouped_y:
         ax.plot(group_data["Time"],group_data["Value"])
         z.append(group_name)
 
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
     ax.xaxis.set_minor_formatter(mdates.DateFormatter("%H:%M"))
-    z.remove("")
+    # z.remove("")
     ax.legend(z)
     # y2.set_index('Time')
     # st.line_chart(y2.groupby('TAG')['Value'])
