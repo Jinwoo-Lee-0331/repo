@@ -90,8 +90,6 @@ with hometab:
         st.cache_data.clear()
         hrs = streamlit_init(hrs)
         hometab.table(hrs[['Location','Last Connected Time','Address']])
-    hrs = streamlit_init(hrs)
-    hometab.table(hrs[['Location','Last Connected Time','Address']])
 
 
 with col2:
