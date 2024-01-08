@@ -39,10 +39,10 @@ def init_connection():
     user_password=str(st.secrets['user_password'])
     remote_bind_address=str(st.secrets['remote_bind_address'])
     database=str(st.secrets['database'])
-    return st.experimental_connection(
+    return st.connection(
         dialect = "mysql",
         type="sql",
-        url=f"mysql://{username}:{user_password}@{remote_bind_address}:{tunnel.local_bind_port}/{database}?charset=utf8mb4"
+        url=f"mysql+pymysql://{username}:{user_password}@{remote_bind_address}:{tunnel.local_bind_port}/{database}?charset=utf8mb4"
     )
     # return pymysql.connect(
     #         host=st.secrets["host"],
