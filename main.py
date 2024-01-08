@@ -81,11 +81,14 @@ if 'update' not in st.session_state:
 col1, col2 = st.columns(2)
 with col1:
     hometab, tab2  = st.tabs(["📋 Board", "📊 Operation"])
+    hrs = streamlit_init(hrs)
+    hometab.table(hrs[['Location','Last Connected Time','Address']])
     if st.button(label="Update", use_container_width=True):
         st.session_state['update'] = False
         st.session_state['update'] = True
 
 if st.session_state['update']:
+    st.cache_data.clear()
     hrs = streamlit_init(hrs)
     hometab.table(hrs[['Location','Last Connected Time','Address']])
 
