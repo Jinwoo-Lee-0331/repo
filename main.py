@@ -25,16 +25,16 @@ st.set_page_config(
 
 @st.cache_resource
 def init_connection():
-    tunnel=SSHTunnelForwarder(('101.101.166.139', 5000),
-                       ssh_username='root',
-                       ssh_password='wlsdn1469!!',
-                       remote_bind_address=('127.0.0.1', 3306))
+    tunnel=SSHTunnelForwarder((st.secrets["server"], st.secrets["port"]),
+                       ssh_username=st.secrets["ssh_username"],
+                       ssh_password=st.secrets["ssh_password"],
+                       remote_bind_address=(st.secrets["remote_bind_address"], st.secrets["remote_bind_port"]))
     tunnel.start()
     return pymysql.connect(
-            host='127.0.0.1', #(local_host)
-            user='ns0331',
-            passwd='wlsdn1469!!',
-            db='hmcportal',
+            host=st.secrets["host"],
+            user=st.secrets["username"],
+            passwd=st.secrets["user_password"],
+            db=st.secrets["database"],
             charset='utf8',
             port=tunnel.local_bind_port)
 conn = init_connection()
