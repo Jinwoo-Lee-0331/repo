@@ -8,7 +8,6 @@ from streamlit_tree_select import tree_select
 import matplotlib.dates as mdates
 from sshtunnel import SSHTunnelForwarder
 import sqlalchemy
-import mysqlclient
 st.set_page_config(
 		page_title= "H2 Data Center", # String or None. Strings get appended with "• Streamlit".
 		 layout="wide",  # Can be "centered" or "wide". In the future also "dashboard", etc.
