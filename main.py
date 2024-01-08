@@ -86,11 +86,11 @@ with col1:
     if st.button(label="Update", use_container_width=True):
         st.session_state['update'] = False
         st.session_state['update'] = True
+    if st.session_state['update']:
+        st.cache_data.clear()
+        hrs = streamlit_init(hrs)
+        hometab.table(hrs[['Location','Last Connected Time','Address']])
 
-if st.session_state['update']:
-    st.cache_data.clear()
-    hrs = streamlit_init(hrs)
-    hometab.table(hrs[['Location','Last Connected Time','Address']])
 
 with col2:
     tab1, tab3  = st.tabs(["📈 Chart","❗ Alarm"])
