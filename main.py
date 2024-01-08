@@ -14,21 +14,26 @@ st.set_page_config(
 		 #page_icon=None,  # String, anything supported by st.image, or None.
 )
 
-tunnel= SSHTunnelForwarder(('101.101.166.139', 5000),
-                            ssh_username='root',
-                            ssh_password='wlsdn1469!!',
-                            remote_bind_address=('127.0.0.1', 3306))
-tunnel.start()
+# tunnel= SSHTunnelForwarder(('101.101.166.139', 5000),
+#                             ssh_username='root',
+#                             ssh_password='wlsdn1469!!',
+#                             remote_bind_address=('127.0.0.1', 3306))
 @st.cache_resource
 def init_connection():
-    return pymysql.connect(
+    a= pymysql.connect(
             host='127.0.0.1', #(local_host)
             user='ns0331',
             passwd='wlsdn1469!!',
             db='hmcportal',
             charset='utf8',
             port=tunnel.local_bind_port)
-conn = init_connection()
+    b= SSHTunnelForwarder(('101.101.166.139', 5000),
+                            ssh_username='root',
+                            ssh_password='wlsdn1469!!',
+                            remote_bind_address=('127.0.0.1', 3306))
+    return a,b
+conn, tunnel = init_connection()
+tunnel.start()
 
 hrs=pd.read_csv('./data/hrs.csv',header=None)
 # hrs=pd.read_csv('C:\\Users\\researcher\\Desktop\\hrs.csv',header=None)
