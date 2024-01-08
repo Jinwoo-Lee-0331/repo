@@ -77,14 +77,13 @@ if 'plot' not in st.session_state:
 if 'update' not in st.session_state:
     st.session_state['update'] = False
 
-
 # st.title('H2 Data Center')
 col1, col2 = st.columns(2)
 with col1:
     hometab, tab2  = st.tabs(["📋 Board", "📊 Operation"])
-    if st.button(label="Query", use_container_width=True):
-        st.session_state.key = False
-        st.session_state.key = True
+    if st.button(label="Update", use_container_width=True):
+        st.session_state['update'] = False
+        st.session_state['update'] = True
 
 if st.session_state['update']:
     hrs = streamlit_init(hrs)
