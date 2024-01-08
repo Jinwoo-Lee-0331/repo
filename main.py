@@ -34,14 +34,14 @@ def init_connection():
     #                         ssh_password='wlsdn1469!!',
     #                         remote_bind_address=('127.0.0.1', 3306))
     tunnel.start()
-    username=st.secrets['username']
-    user_password=st.secrets['user_password']
-    remote_bind_address=st.secrets['remote_bind_address']
-    database=st.secrets['database']
+    username=str(st.secrets['username'])
+    user_password=str(st.secrets['user_password'])
+    remote_bind_address=str(st.secrets['remote_bind_address'])
+    database=str(st.secrets['database'])
     return st.connection(
         "mysql",
         type="sql",
-        url=f"mysql://{username}:{user_password}@{remote_bind_address}:{str(tunnel.local_bind_port)}/{database}?charset=utf8mb4"
+        url=f"mysql://{username}:{user_password}@{remote_bind_address}:{tunnel.local_bind_port}/{database}?charset=utf8mb4"
     )
     # return pymysql.connect(
     #         host=st.secrets["host"],
