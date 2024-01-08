@@ -1,97 +1,161 @@
-import pymssql
-import pyodbc
+import pymysql
 import matplotlib.pyplot as plt
 import pandas as pd
 import streamlit as st
 import numpy as np
-import datetime
+from datetime import datetime, timedelta
 from streamlit_tree_select import tree_select
 import matplotlib.dates as mdates
+from sshtunnel import SSHTunnelForwarder
+st.set_page_config(
+		page_title= "H2 Data Center", # String or None. Strings get appended with "• Streamlit".
+		 layout="wide",  # Can be "centered" or "wide". In the future also "dashboard", etc.
+		 #initial_sidebar_state="auto",  # Can be "auto", "expanded", "collapsed"
+		 #page_icon=None,  # String, anything supported by st.image, or None.
+)
 
+tunnel= SSHTunnelForwarder(('101.101.166.139', 5000),
+                            ssh_username='root',
+                            ssh_password='wlsdn1469!!',
+                            remote_bind_address=('127.0.0.1', 3306))
+tunnel.start()
 @st.cache_resource
 def init_connection():
-    return pyodbc.connect(
-        "DRIVER={ODBC Driver 17 for SQL Server};SERVER="
-        + st.secrets["server"]
-        + ";DATABASE="
-        + st.secrets["database"]
-        + ";UID="
-        + st.secrets["username"]
-        + ";PWD="
-        + st.secrets["password"]
-    )
+    return pymysql.connect(
+            host='127.0.0.1', #(local_host)
+            user='ns0331',
+            passwd='wlsdn1469!!',
+            db='hmcportal',
+            charset='utf8',
+            port=tunnel.local_bind_port)
 conn = init_connection()
 
-@st.cache_data(ttl=600)
+hrs=pd.read_csv('C:\\Users\\researcher\\Desktop\\hrs.csv',header=None)
+hrs.columns=['Location','Address']
+hrs['Last Connected Time']='Disconnected'
+
+@st.cache_data(ttl=2000)
+def streamlit_init(hrs):
+    for idx,i in enumerate(hrs['Location']):
+        query1 = (f"SELECT Time ,Tag ,Value FROM RawData"
+                  f" where Tag like '%{i}%온도%' and Time > '{(datetime.now()-timedelta(hours=5)).strftime('%Y-%m-%d %H:%M:%S')}' order by Time desc LIMIT 1;")
+        qry= pd.read_sql(query1, conn)
+        try:
+            hrs.loc[idx,'Last Connected Time']=qry.loc[0,'Time'].strftime("%Y-%m-%d %H:%M:%S")
+        except Exception as e:
+            print(e)
+    return hrs
+hrs=streamlit_init(hrs)
+
+@st.cache_data(ttl=2000)
 def runqry(date_i,loc_i):
-    # conn = pymssql.connect(server='192.168.210.14', user='hmcportal', password='qwer1234!', database='hmcportal',
-    #                        charset='utf8')
     cursor = conn.cursor()
-    query = "SELECT Time, TAG, Value FROM [HMCPISVR].[piarchive]..[PICOMP2] WHERE Time > '" + date_i.strftime(
-        "%Y-%m-%d") + " 07:00:00' and Time < '" + date_i.strftime("%Y-%m-%d") + " 21:00:00' and tag like '%" + loc_i + "%' order by Time asc"
-    df = pd.read_sql(query, conn)
-    # cursor.execute("SELECT Time, TAG, Value FROM [HMCPISVR].[piarchive]..[PICOMP2] WHERE Time > '" + date_i.strftime(
-    #     "%Y-%m-%d") + " 07:00:00' and Time < '" + date_i.strftime("%Y-%m-%d") + " 21:00:00' and tag like '%" + loc_i + "%' order by Time asc")
-    # x = pd.DataFrame(df, columns=["Time", "TAG", "VAL"])
-    df.columns=["Time", "TAG", "VAL"]
-    x = df
-    x = x[x["TAG"].str.contains(r'(OPC UA.(\w+).2.Tags.\w+.\w+.(\w+)-(\w-\d\w)-(.+))')]
-    y = pd.concat([pd.to_datetime(x["Time"]), x["TAG"].str.extract(r'OPC UA.(\w+).2.Tags.\w+.\w+.(\w+)-(\w-\d\w)-(.+)'), x["VAL"].astype('float')],
-                  axis=1)
-    y.columns = ["Time", "Location", "Attribute", "Serial", "TAG", "Value"]
+    query = "SELECT Time, Tag, Value FROM RawData where Time > '" + date_i.strftime("%Y-%m-%d") + " 07:00:00' and Time < '" + \
+            date_i.strftime("%Y-%m-%d") + " 21:00:00' and tag like '%" + loc_i + "%' order by Time asc;"
+    x = pd.read_sql(query, conn)
+    # x = x[x["TAG"].str.contains(r'(OPC UA.(\w+).2.Tags.\w+.\w+.(\w+)-(\w-\d\w)-(.+))')]
+    y = pd.concat([x["Time"], x["Tag"].str.extract(r'(\w+)-(\w+)-(\w-\w+)-(.+)'),
+                   x["Value"]], axis=1)
+    y.columns = ["Time", "Location", "Attribute","Serial", "Tag", "Value"]
     # 연결 끊기
     # conn.close()
-    return y
+    return x, y
+
+# st.title('H2 Data Center')
+col1, col2 = st.columns(2)
+with col1:
+    hometab, tab2  = st.tabs(["📋 Board", "📊 Operation"])
+    hometab.table(hrs[['Location','Last Connected Time','Address']])
+with col2:
+    tab1, tab3  = st.tabs(["📈 Chart","❗ Alarm"])
 
 if 'key' not in st.session_state:
     st.session_state.key = False
+if 'plot' not in st.session_state:
+    st.session_state['plot'] = False
 
 with st.sidebar:
+    st.sidebar.markdown("<h1 style='text-align: center;"
+                        " color: #235191;'>H2 Data Center</h1>", unsafe_allow_html=True)
     date_i = st.sidebar.date_input(label="Select Time")
-    loc_i = st.sidebar.selectbox("H2 Refueling Station",['강서충전소', '괴산개미충전소', '서산수소충전소', '성남E1수소충전소', '안성아트센터수소충전소', '양산차고지수소충전소', '전주삼천수소충전소', '제천삼보수소충전소', '청주문의수소충전소', '평택버스충전소', '화성체육시설충전소'],index=2)
+    loc_i = st.sidebar.selectbox("H2 Refueling Station",list(hrs.iloc[:,0]),index=2)
 
     nodes=[{"label": "Query 버튼을 클릭하세요", "value": 0}]
 
-    if st.button(label="Query"):
+    if st.button(label="Query", use_container_width=True):
+        st.session_state.key = False
         st.session_state.key = True
+        st.session_state['plot'] = True
+    st.markdown("---")
+
+    # if st.button(label="Plot"):
+    #     st.session_state['plot'] = True
 
     if st.session_state.key:
-        y = runqry(date_i, loc_i)
-        z = y.loc[y["Attribute"] == "TAG", "TAG"]
+        x, y = runqry(date_i, loc_i)
+        z = y["Tag"]
         z = pd.concat([z, z], axis=1)
         z.drop_duplicates(inplace=True)
         z.columns = ["label", "value"]
         z = z.to_dict('records')
 
-        nodes = [{"label": "TAG", "value": "TAG", "children": z}]
-        return_select = tree_select(nodes)
-        # st.write(return_select)
+        # rootnode = Node("서산수소충전소")
+        srl = y['Serial'].drop_duplicates()
+        srl_trd = []
+        for idx_i,i in enumerate(srl):
+            # Node(i, parent=rootnode)
+            atr = y.loc[y['Serial'] == i, 'Attribute'].drop_duplicates()
+            atr_trd = []
+            for idx_j,j in enumerate(atr):
+                # Node(j, parent=rootnode.children[idx_i])
+                tag = y.loc[(y['Serial'] == i) & (y['Attribute'] == j), 'Tag'].drop_duplicates()
+                tag_trd = []
+                for k in tag:
+                    # Node(k, parent=rootnode.children[idx_i].children[idx_j])
+                    tag_trd.append({'label': k, 'value': j+'-'+i+'-'+k})
+                atr_trd.append({'label': j, 'value': j+'-'+i, 'children': tag_trd})
+            srl_trd.append({'label': i, 'value': i, 'children': atr_trd})
+        root=[{'label': loc_i, 'value': loc_i, 'children': srl_trd}]
+        return_select = tree_select(root, checked=[root[0]['children'][0]['children'][0]['children'][0]['value']],
+                                    expanded=[root[0]['value'], root[0]['children'][0]['value'],
+                                              root[0]['children'][0]['children'][0]['value']])
+        # for pre, fill, node in RenderTree(root):
+        #     print("%s%s" % (pre, node.name))
+        # st.text(rootnode)
+        # st.write(return_select["checked"])
+        # for pre, fill, node in RenderTree(root):
+        #     st.write("%s%s" % (pre, node.name))
+        opr=y[(y["Attribute"]=='STS')]
+        opr['Value']=opr['Value'].astype(bool)
+        opr.set_index("Time",drop=True,inplace=True)
+        alm=y[(y["Attribute"]=='ALM')]
+        alm['Value']=alm['Value'].astype(bool)
+        alm.set_index("Time",drop=True,inplace=True)
+        tab2.dataframe(opr)
+        tab3.dataframe(alm)
 
-if st.sidebar.button(label="Plot"):
-    # st.write('|'.join(return_select["checked"]))
-    y2=y.loc[y["TAG"].str.contains('|'.join(return_select["checked"])), ["Time", "TAG", "Value"]]
-    # y2["Time"].astype("")
-    # y2["Time"]=y2["Time"].strftime("%H:%M")
-    grouped_y = y2.groupby("TAG")
-    plt.rc('font', family='Malgun Gothic')
-    plt.xticks(np.arange(min(y2["Time"]), max(y2["Time"]),datetime.timedelta(hours=2)))
-    # plt.yticks(np.arange(min(y2["Value"]), max(y2["Value"]),0.2*(max(y2["Value"])-min(y2["Value"]))))
-    fig, ax = plt.subplots()
-    z=[]
-    for group_name, group_data in grouped_y:
-        ax.plot(group_data["Time"],group_data["Value"])
-        z.append(group_name)
 
-    ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
-    ax.xaxis.set_minor_formatter(mdates.DateFormatter("%H:%M"))
+# if st.sidebar.button
+
+if st.session_state['plot']:
+    y2=x.loc[x["Tag"].str.contains('|'.join(return_select["checked"])), ["Time", "Tag", "Value"]]
+
+    # grouped_y = y2.groupby("Tag")
+    # plt.rc('font', family='Malgun Gothic')
+    # plt.xticks(np.arange(min(y2["Time"]), max(y2["Time"]),timedelta(hours=2)))
+    # # plt.yticks(np.arange(min(y2["Value"]), max(y2["Value"]),0.2*(max(y2["Value"])-min(y2["Value"]))))
+    # fig, ax = plt.subplots()
+    # z=[]
+    # for group_name, group_data in grouped_y:
+    #     ax.plot(group_data["Time"],group_data["Value"])
+    #     z.append(group_name)
+    # ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
+    # ax.xaxis.set_minor_formatter(mdates.DateFormatter("%H:%M"))
+    # ax.legend(z)
+
     # z.remove("")
-    ax.legend(z)
     # y2.set_index('Time')
-    # st.line_chart(y2.groupby('TAG')['Value'])
-    yy=y
-    yy.set_index("Time",drop=True,inplace=True)
-    st.pyplot(fig)
-    st.table(yy[yy["Attribute"]=="ALM"])
-
-
-
+    tab1.line_chart(y2,x='Time',y='Value',color='Tag')
+    tab1.line_chart()
+    # tab1.pyplot(fig)
+    # st.table(yy)
