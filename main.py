@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from streamlit_tree_select import tree_select
 import matplotlib.dates as mdates
 from sshtunnel import SSHTunnelForwarder
-import SQLAlchemy
+import sqlalchemy
 import mysqlclient
 st.set_page_config(
 		page_title= "H2 Data Center", # String or None. Strings get appended with "• Streamlit".
