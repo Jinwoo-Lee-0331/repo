@@ -159,7 +159,6 @@ with st.sidebar:
 # if st.sidebar.button
 
 if st.session_state['plot']:
-    y2=x.loc[x["Tag"].str.contains('|'.join(return_select["checked"])), ["Time", "Tag", "Value"]]
 
     # grouped_y = y2.groupby("Tag")
     # plt.rc('font', family='Malgun Gothic')
@@ -176,10 +175,12 @@ if st.session_state['plot']:
 
     # z.remove("")
     # y2.set_index('Time')
-    try:
-        tab1.line_chart(y2,x='Time',y='Value',color='Tag')
-    except Exception as e:
-        tab1.line_chart(y2,x='Time',y='Value')
+    if return_select["checked"]:
+        y2=x.loc[x["Tag"].str.contains('|'.join(return_select["checked"])), ["Time", "Tag", "Value"]]
+        try:
+            tab1.line_chart(y2,x='Time',y='Value',color='Tag')
+        except Exception as e:
+            tab1.line_chart(y2,x='Time',y='Value')
 
     # tab1.pyplot(fig)
     # st.table(yy)
