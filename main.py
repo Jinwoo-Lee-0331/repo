@@ -48,7 +48,7 @@ hrs['Last Connected Time']='Disconnected'
 def streamlit_init(hrs):
     for idx,i in enumerate(hrs['Location']):
         query1 = (f"SELECT Time ,Tag ,Value FROM RawData"
-                  f" where Tag like '%{i}%온도%' and Time > '{(datetime.now()-timedelta(hours=5)).strftime('%Y-%m-%d %H:%M:%S')}' order by Time desc LIMIT 1;")
+                  f" where Tag like '%{i}%온도%' and Time > '{(datetime.now()-timedelta(minutes=10)).strftime('%Y-%m-%d %H:%M:%S')}' order by Time desc LIMIT 1;")
         qry= pd.read_sql(query1, conn)
         try:
             hrs.loc[idx,'Last Connected Time']=qry.loc[0,'Time'].strftime("%Y-%m-%d %H:%M:%S")
