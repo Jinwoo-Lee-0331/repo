@@ -74,8 +74,8 @@ if 'key' not in st.session_state:
     st.session_state.key = False
 if 'plot' not in st.session_state:
     st.session_state['plot'] = False
-if 'update' not in st.session_state:
-    st.session_state['update'] = False
+# if 'update' not in st.session_state:
+#     st.session_state['update'] = False
 
 # st.title('H2 Data Center')
 col1, col2 = st.columns(2)
@@ -86,10 +86,10 @@ with hometab:
     if st.button(label="Update", use_container_width=True):
         st.session_state['update'] = False
         st.session_state['update'] = True
-    if st.session_state['update']:
-        st.cache_data.clear()
-        hrs = streamlit_init(hrs)
-        hometab.table(hrs[['Location','Last Connected Time','Address']])
+    # if st.session_state['update']:
+    #     st.cache_data.clear()
+    hrs = streamlit_init(hrs)
+    hometab.table(hrs[['Location','Last Connected Time','Address']])
 
 
 with col2:
