@@ -14,22 +14,22 @@ st.set_page_config(
 		 #page_icon=None,  # String, anything supported by st.image, or None.
 )
 
-# @st.cache_resource
-# def tunnel_connection():
-#     return SSHTunnelForwarder(('101.101.166.139', 5000),
-#                             ssh_username='root',
-#                             ssh_password='wlsdn1469!!',
-#                             remote_bind_address=('127.0.0.1', 3306))
-# tunnel=tunnel_connection()
-# tunnel.start()
-
 @st.cache_resource
-def init_connection():
-    tunnel=SSHTunnelForwarder((st.secrets["server"], st.secrets["port"]),
+def tunnel_connection():
+    return SSHTunnelForwarder((st.secrets["server"], st.secrets["port"]),
                        ssh_username=st.secrets["ssh_username"],
                        ssh_password=st.secrets["ssh_password"],
                        remote_bind_address=(st.secrets["remote_bind_address"], st.secrets["remote_bind_port"]))
-    tunnel.start()
+tunnel=tunnel_connection()
+tunnel.start()
+
+@st.cache_resource
+def init_connection():
+    # tunnel=SSHTunnelForwarder((st.secrets["server"], st.secrets["port"]),
+    #                    ssh_username=st.secrets["ssh_username"],
+    #                    ssh_password=st.secrets["ssh_password"],
+    #                    remote_bind_address=(st.secrets["remote_bind_address"], st.secrets["remote_bind_port"]))
+    # tunnel.start()
     return pymysql.connect(
             host=st.secrets["host"],
             user=st.secrets["username"],
@@ -165,7 +165,10 @@ if st.session_state['plot']:
 
     # z.remove("")
     # y2.set_index('Time')
-    tab1.line_chart(y2,x='Time',y='Value',color='Tag')
-    tab1.line_chart()
+    try:
+        tab1.line_chart(y2,x='Time',y='Value',color='Tag')
+    except Exception as e:
+        tab1.line_chart(y2,x='Time',y='Value')
+
     # tab1.pyplot(fig)
     # st.table(yy)
