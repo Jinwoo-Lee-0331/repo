@@ -22,8 +22,9 @@ def tunnel_connection():
                             remote_bind_address=('127.0.0.1', 3306))
 tunnel=tunnel_connection()
 tunnel.start()
+
 @st.cache_resource
-def init_connection():
+def init_connection(tunnel):
     return pymysql.connect(
             host='127.0.0.1', #(local_host)
             user='ns0331',
@@ -31,7 +32,7 @@ def init_connection():
             db='hmcportal',
             charset='utf8',
             port=tunnel.local_bind_port)
-conn = init_connection()
+conn = init_connection(tunnel)
 
 hrs=pd.read_csv('./data/hrs.csv',header=None)
 # hrs=pd.read_csv('C:\\Users\\researcher\\Desktop\\hrs.csv',header=None)
