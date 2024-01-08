@@ -30,7 +30,8 @@ def init_connection():
             port=tunnel.local_bind_port)
 conn = init_connection()
 
-hrs=pd.read_csv('C:\\Users\\researcher\\Desktop\\hrs.csv',header=None)
+hrs=pd.read_csv('.\\hrs.csv',header=None)
+# hrs=pd.read_csv('C:\\Users\\researcher\\Desktop\\hrs.csv',header=None)
 hrs.columns=['Location','Address']
 hrs['Last Connected Time']='Disconnected'
 
