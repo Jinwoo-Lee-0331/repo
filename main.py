@@ -7,6 +7,8 @@ from datetime import datetime, timedelta
 from streamlit_tree_select import tree_select
 import matplotlib.dates as mdates
 from sshtunnel import SSHTunnelForwarder
+import SQLAlchemy
+import mysqlclient
 st.set_page_config(
 		page_title= "H2 Data Center", # String or None. Strings get appended with "• Streamlit".
 		 layout="wide",  # Can be "centered" or "wide". In the future also "dashboard", etc.
@@ -38,8 +40,8 @@ def init_connection():
     user_password=str(st.secrets['user_password'])
     remote_bind_address=str(st.secrets['remote_bind_address'])
     database=str(st.secrets['database'])
-    return st.connection(
-        "mysql",
+    return st.experimental_connection(
+        dialect = "mysql",
         type="sql",
         url=f"mysql://{username}:{user_password}@{remote_bind_address}:{tunnel.local_bind_port}/{database}?charset=utf8mb4"
     )
