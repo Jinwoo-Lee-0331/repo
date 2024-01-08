@@ -29,18 +29,27 @@ def init_connection():
                        ssh_username=st.secrets["ssh_username"],
                        ssh_password=st.secrets["ssh_password"],
                        remote_bind_address=(st.secrets["remote_bind_address"], st.secrets["remote_bind_port"]))
+    # tunnel=SSHTunnelForwarder(('101.101.166.139', 5000),
+    #                         ssh_username='root',
+    #                         ssh_password='wlsdn1469!!',
+    #                         remote_bind_address=('127.0.0.1', 3306))
     tunnel.start()
-    return pymysql.connect(
-            host=st.secrets["host"],
-            user=st.secrets["username"],
-            passwd=st.secrets["user_password"],
-            db=st.secrets["database"],
-            charset='utf8',
-            port=tunnel.local_bind_port)
+    return st.connection(
+        "mysql",
+        type="sql",
+        url=f"mysql://{st.secrets['username']}:{st.secrets['user_password']}@{st.secrets['remote_bind_address']}:{str(tunnel.local_bind_port)}/{st.secrets['database']}?charset=utf8mb4"
+    )
+    # return pymysql.connect(
+    #         host=st.secrets["host"],
+    #         user=st.secrets["username"],
+    #         passwd=st.secrets["user_password"],
+    #         db=st.secrets["database"],
+    #         charset='utf8',
+    #         port=tunnel.local_bind_port)
 conn = init_connection()
 
-hrs=pd.read_csv('./data/hrs.csv',header=None)
-# hrs=pd.read_csv('C:\\Users\\researcher\\Desktop\\hrs.csv',header=None)
+# hrs=pd.read_csv('./data/hrs.csv',header=None)
+hrs=pd.read_csv('C:/Users/researcher/Desktop/hrs.csv',header=None)
 hrs.columns=['Location','Address']
 hrs['Last Connected Time']='Disconnected'
 
@@ -49,7 +58,9 @@ def streamlit_init(hrs):
     for idx,i in enumerate(hrs['Location']):
         query1 = (f"SELECT Time ,Tag ,Value FROM RawData"
                   f" where Tag like '%{i}%온도%' and Time > '{(datetime.now()-timedelta(hours=5)).strftime('%Y-%m-%d %H:%M:%S')}' order by Time desc LIMIT 1;")
-        qry= pd.read_sql(query1, conn)
+        # qry= pd.read_sql(query1, conn)
+        qry=conn.query(query1)
+        qry=pd.DataFrame(qry)
         try:
             hrs.loc[idx,'Last Connected Time']=qry.loc[0,'Time'].strftime("%Y-%m-%d %H:%M:%S")
         except Exception as e:
@@ -59,10 +70,12 @@ hrs=streamlit_init(hrs)
 
 @st.cache_data(ttl=2000)
 def runqry(date_i,loc_i):
-    cursor = conn.cursor()
+    # cursor = conn.cursor()
     query = "SELECT Time, Tag, Value FROM RawData where Time > '" + date_i.strftime("%Y-%m-%d") + " 07:00:00' and Time < '" + \
             date_i.strftime("%Y-%m-%d") + " 21:00:00' and tag like '%" + loc_i + "%' order by Time asc;"
-    x = pd.read_sql(query, conn)
+    # pd.read_sql(query, conn)
+    x = conn.query(query)
+    x = pd.DataFrame(x)
     # x = x[x["TAG"].str.contains(r'(OPC UA.(\w+).2.Tags.\w+.\w+.(\w+)-(\w-\d\w)-(.+))')]
     y = pd.concat([x["Time"], x["Tag"].str.extract(r'(\w+)-(\w+)-(\w-\w+)-(.+)'),
                    x["Value"]], axis=1)
