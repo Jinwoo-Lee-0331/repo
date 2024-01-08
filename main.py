@@ -55,7 +55,6 @@ def streamlit_init(hrs):
         except Exception as e:
             print(e)
     return hrs
-hrs=streamlit_init(hrs)
 
 @st.cache_data(ttl=2000)
 def runqry(date_i,loc_i):
@@ -71,18 +70,28 @@ def runqry(date_i,loc_i):
     # conn.close()
     return x, y
 
-# st.title('H2 Data Center')
-col1, col2 = st.columns(2)
-with col1:
-    hometab, tab2  = st.tabs(["📋 Board", "📊 Operation"])
-    hometab.table(hrs[['Location','Last Connected Time','Address']])
-with col2:
-    tab1, tab3  = st.tabs(["📈 Chart","❗ Alarm"])
-
 if 'key' not in st.session_state:
     st.session_state.key = False
 if 'plot' not in st.session_state:
     st.session_state['plot'] = False
+if 'update' not in st.session_state:
+    st.session_state['update'] = False
+
+
+# st.title('H2 Data Center')
+col1, col2 = st.columns(2)
+with col1:
+    hometab, tab2  = st.tabs(["📋 Board", "📊 Operation"])
+    if st.button(label="Query", use_container_width=True):
+        st.session_state.key = False
+        st.session_state.key = True
+
+if st.session_state['update']:
+    hrs = streamlit_init(hrs)
+    hometab.table(hrs[['Location','Last Connected Time','Address']])
+
+with col2:
+    tab1, tab3  = st.tabs(["📈 Chart","❗ Alarm"])
 
 with st.sidebar:
     st.sidebar.markdown("<h1 style='text-align: center;"
@@ -172,3 +181,4 @@ if st.session_state['plot']:
 
     # tab1.pyplot(fig)
     # st.table(yy)
+
