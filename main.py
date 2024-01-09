@@ -94,7 +94,7 @@ with hometab:
         st.session_state['update'] = True
 
     if st.session_state['update']:
-        hrs_update = pd.read_csv('./data/hrs_update.csv', header=None)
+        hrs_update = pd.read_csv('./data/hrs_update.csv')
         st.write(hrs_update)
         # hometab.table(hrs_update[['Location','Last Connected Time','Address']])
 
