@@ -41,8 +41,7 @@ st.write(tunnel.local_bind_port)
 @st.cache_resource
 def init_connection():
     return st.connection(
-        type="sql",
-        'hmc_db')
+        type="sql", url='hmc_db')
 conn=init_connection()
 
 hrs=pd.read_csv('./data/hrs.csv',header=None)
