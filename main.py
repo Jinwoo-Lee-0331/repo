@@ -44,7 +44,7 @@ hrs=pd.read_csv('./data/hrs.csv',header=None)
 hrs.columns=['Location','Address']
 hrs['Last Connected Time']='Disconnected'
 
-@st.cache_data(ttl=2000)
+# @st.cache_data(ttl=2000)
 def streamlit_init(hrs):
     for idx,i in enumerate(hrs['Location']):
         query1 = (f"SELECT Time ,Tag ,Value FROM RawData"
@@ -84,12 +84,12 @@ with col1:
 
 with hometab:
     if st.button(label="Update", use_container_width=True):
-        st.session_state['update'] = False
-        st.session_state['update'] = True
+        # st.session_state['update'] = False
+        # st.session_state['update'] = True
     # if st.session_state['update']:
     #     st.cache_data.clear()
-    hrs = streamlit_init(hrs)
-    hometab.table(hrs[['Location','Last Connected Time','Address']])
+        hrs = streamlit_init(hrs)
+        hometab.table(hrs[['Location','Last Connected Time','Address']])
 
 
 with col2:
@@ -104,7 +104,7 @@ with st.sidebar:
     nodes=[{"label": "Query 버튼을 클릭하세요", "value": 0}]
 
     if st.button(label="Query", use_container_width=True):
-        st.session_state.key = False
+        # st.session_state.key = False
         st.session_state.key = True
         st.session_state['plot'] = True
     st.markdown("---")
