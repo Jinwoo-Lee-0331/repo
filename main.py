@@ -40,10 +40,14 @@ user_password=st.secrets["user_password"]
 host=st.secrets["host"]
 database=st.secrets["database"]
 
-conn=st.connection(
+@st.cache_resource
+def init_connection():
+    return st.connection(
         "mysql",
         type="sql",
         url=f"mysql://{username}:{user_password}@{host}:{tunnel.local_bind_port}/{database}?charset=utf8mb4")
+
+conn=init_connection()
 
 # hrs=pd.read_csv('./data/hrs.csv',header=None)
 hrs=pd.read_csv('C:\\Users\\researcher\\Desktop\\hrs.csv',header=None)
