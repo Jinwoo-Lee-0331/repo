@@ -36,10 +36,7 @@ tunnel.start()
 #             port=tunnel.local_bind_port)
 # conn = init_connection()
 
-username=st.secrets["username"]
-user_password=st.secrets["user_password"]
-host=st.secrets["host"]
-database=st.secrets["database"]
+st.write(tunnel.local_bind_port)
 
 @st.cache_resource
 def init_connection():
