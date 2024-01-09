@@ -48,7 +48,7 @@ hrs=pd.read_csv('./data/hrs.csv',header=None)
 hrs.columns=['Location','Address']
 hrs['Last Connected Time']='Disconnected'
 
-@st.cache_data(ttl=2000)
+# @st.cache_data(ttl=2000)
 def streamlit_init(hrs):
     for idx,i in enumerate(hrs['Location']):
         query1 = (f"SELECT Time ,Tag ,Value FROM RawData"
@@ -64,7 +64,6 @@ def streamlit_init(hrs):
 
 @st.cache_data(ttl=2000)
 def runqry(date_i,loc_i):
-    # cursor = conn.cursor()
     query = "SELECT Time, Tag, Value FROM RawData where Time > '" + date_i.strftime("%Y-%m-%d") + " 07:00:00' and Time < '" + \
             date_i.strftime("%Y-%m-%d") + " 21:00:00' and tag like '%" + loc_i + "%' order by Time asc;"
     x = conn.query(query)
@@ -84,20 +83,19 @@ if 'plot' not in st.session_state:
 if 'update' not in st.session_state:
     st.session_state['update'] = False
 
-# st.title('H2 Data Center')
 col1, col2 = st.columns(2)
 with col1:
     hometab, tab2  = st.tabs(["📋 Board", "📊 Operation"])
 
 with hometab:
     if st.button(label="Update", use_container_width=True):
-        st.session_state['update'] = True
-    #     st.cache_data.clear()
         hrs = streamlit_init(hrs)
         hrs.to_csv('./data/hrs_update.csv', index=False, encoding='utf-8')
+        st.session_state['update'] = True
 
     if st.session_state['update']:
-        hometab.table(hrs[['Location','Last Connected Time','Address']])
+        hrs_update = pd.read_csv('./data/hrs_update.csv', header=None)
+        hometab.table(hrs_update[['Location','Last Connected Time','Address']])
         st.session_state['update'] = False
 
 
@@ -118,9 +116,6 @@ with st.sidebar:
         st.session_state['plot'] = True
     st.markdown("---")
 
-    # if st.button(label="Plot"):
-    #     st.session_state['plot'] = True
-
     if st.session_state.key:
         x, y = runqry(date_i, loc_i)
         z = y["Tag"]
@@ -129,19 +124,15 @@ with st.sidebar:
         z.columns = ["label", "value"]
         z = z.to_dict('records')
 
-        # rootnode = Node("서산수소충전소")
         srl = y['Serial'].drop_duplicates()
         srl_trd = []
         for idx_i,i in enumerate(srl):
-            # Node(i, parent=rootnode)
             atr = y.loc[y['Serial'] == i, 'Attribute'].drop_duplicates()
             atr_trd = []
             for idx_j,j in enumerate(atr):
-                # Node(j, parent=rootnode.children[idx_i])
                 tag = y.loc[(y['Serial'] == i) & (y['Attribute'] == j), 'Tag'].drop_duplicates()
                 tag_trd = []
                 for k in tag:
-                    # Node(k, parent=rootnode.children[idx_i].children[idx_j])
                     tag_trd.append({'label': k, 'value': j+'-'+i+'-'+k})
                 atr_trd.append({'label': j, 'value': j+'-'+i, 'children': tag_trd})
             srl_trd.append({'label': i, 'value': i, 'children': atr_trd})
@@ -149,12 +140,6 @@ with st.sidebar:
         return_select = tree_select(root, checked=[root[0]['children'][0]['children'][0]['children'][0]['value']],
                                     expanded=[root[0]['value'], root[0]['children'][0]['value'],
                                               root[0]['children'][0]['children'][0]['value']])
-        # for pre, fill, node in RenderTree(root):
-        #     print("%s%s" % (pre, node.name))
-        # st.text(rootnode)
-        # st.write(return_select["checked"])
-        # for pre, fill, node in RenderTree(root):
-        #     st.write("%s%s" % (pre, node.name))
         opr=y[(y["Attribute"]=='STS')]
         opr['Value']=opr['Value'].astype(bool)
         opr.set_index("Time",drop=True,inplace=True)
@@ -164,32 +149,10 @@ with st.sidebar:
         tab2.dataframe(opr)
         tab3.dataframe(alm)
 
-
-# if st.sidebar.button
-
 if st.session_state['plot']:
-
-    # grouped_y = y2.groupby("Tag")
-    # plt.rc('font', family='Malgun Gothic')
-    # plt.xticks(np.arange(min(y2["Time"]), max(y2["Time"]),timedelta(hours=2)))
-    # # plt.yticks(np.arange(min(y2["Value"]), max(y2["Value"]),0.2*(max(y2["Value"])-min(y2["Value"]))))
-    # fig, ax = plt.subplots()
-    # z=[]
-    # for group_name, group_data in grouped_y:
-    #     ax.plot(group_data["Time"],group_data["Value"])
-    #     z.append(group_name)
-    # ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
-    # ax.xaxis.set_minor_formatter(mdates.DateFormatter("%H:%M"))
-    # ax.legend(z)
-
-    # z.remove("")
-    # y2.set_index('Time')
     if return_select["checked"]:
         y2=x.loc[x["Tag"].str.contains('|'.join(return_select["checked"])), ["Time", "Tag", "Value"]]
         try:
             tab1.line_chart(y2,x='Time',y='Value',color='Tag')
         except Exception as e:
             tab1.line_chart(y2,x='Time',y='Value')
-
-    # tab1.pyplot(fig)
-    # st.table(yy)
