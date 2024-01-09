@@ -7,6 +7,8 @@ from datetime import datetime, timedelta
 from streamlit_tree_select import tree_select
 import matplotlib.dates as mdates
 from sshtunnel import SSHTunnelForwarder
+import socket
+
 st.set_page_config(
 		page_title= "H2 Data Center", # String or None. Strings get appended with "• Streamlit".
 		 layout="wide",  # Can be "centered" or "wide". In the future also "dashboard", etc.
@@ -44,7 +46,7 @@ hrs=pd.read_csv('./data/hrs.csv',header=None)
 hrs.columns=['Location','Address']
 hrs['Last Connected Time']='Disconnected'
 
-# @st.cache_data(ttl=2000)
+@st.cache_data(ttl=2000)
 def streamlit_init(hrs):
     for idx,i in enumerate(hrs['Location']):
         query1 = (f"SELECT Time ,Tag ,Value FROM RawData"
@@ -74,8 +76,8 @@ if 'key' not in st.session_state:
     st.session_state.key = False
 if 'plot' not in st.session_state:
     st.session_state['plot'] = False
-# if 'update' not in st.session_state:
-#     st.session_state['update'] = False
+if 'update' not in st.session_state:
+    st.session_state['update'] = False
 
 # st.title('H2 Data Center')
 col1, col2 = st.columns(2)
@@ -85,10 +87,12 @@ with col1:
 with hometab:
     if st.button(label="Update", use_container_width=True):
         # st.session_state['update'] = False
-        # st.session_state['update'] = True
+        st.session_state['update'] = True
     # if st.session_state['update']:
     #     st.cache_data.clear()
         hrs = streamlit_init(hrs)
+
+    if st.session_state['update']:
         hometab.table(hrs[['Location','Last Connected Time','Address']])
 
 
@@ -184,4 +188,3 @@ if st.session_state['plot']:
 
     # tab1.pyplot(fig)
     # st.table(yy)
-
