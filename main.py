@@ -96,7 +96,6 @@ with hometab:
     if st.session_state['update']:
         hrs_update = pd.read_csv('./data/hrs_update.csv', header=None)
         hometab.table(hrs_update[['Location','Last Connected Time','Address']])
-        st.session_state['update'] = False
 
 
 with col2:
