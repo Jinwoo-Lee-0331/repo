@@ -24,30 +24,30 @@ def tunnel_connection():
 tunnel=tunnel_connection()
 tunnel.start()
 
-@st.cache_resource
-def init_connection():
-    return pymysql.connect(
-            host='127.0.0.1', #(local_host)
-            user='ns0331',
-            passwd='wlsdn1469!!',
-            db='hmcportal',
-            charset='utf8',
-            port=tunnel.local_bind_port)
-conn = init_connection()
+
+# @st.cache_resource
+# def init_connection():
+#     return pymysql.connect(
+#             host='127.0.0.1', #(local_host)
+#             user='ns0331',
+#             passwd='wlsdn1469!!',
+#             db='hmcportal',
+#             charset='utf8',
+#             port=tunnel.local_bind_port)
+# conn = init_connection()
 
 username=st.secrets["username"]
 user_password=st.secrets["user_password"]
 host=st.secrets["host"]
 database=st.secrets["database"]
 
-# @st.cache_resource
-# def init_connection():
-#     return st.connection(
-#         "mysql",
-#         type="sql",
-#         url=f"mysql://{username}:{user_password}@{host}:{tunnel.local_bind_port}/{database}?charset=utf8mb4")
-# conn=init_connection()
-st.write(tunnel.local_bind_port)
+@st.cache_resource
+def init_connection():
+    return st.connection(
+        "mysql",
+        type="sql",
+        url='hmc_db')
+conn=init_connection()
 
 hrs=pd.read_csv('./data/hrs.csv',header=None)
 # hrs=pd.read_csv('C:\\Users\\researcher\\Desktop\\hrs.csv',header=None)
