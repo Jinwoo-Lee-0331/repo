@@ -94,7 +94,7 @@ with hometab:
         st.session_state['update'] = True
     #     st.cache_data.clear()
         hrs = streamlit_init(hrs)
-	hrs.to_csv('./data/hrs_update.csv', index=False, encoding='utf-8')
+	    hrs.to_csv('./data/hrs_update.csv', index=False, encoding='utf-8')
 
     if st.session_state['update']:
         hometab.table(hrs[['Location','Last Connected Time','Address']])
