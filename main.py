@@ -67,7 +67,8 @@ def runqry(date_i,loc_i):
     # cursor = conn.cursor()
     query = "SELECT Time, Tag, Value FROM RawData where Time > '" + date_i.strftime("%Y-%m-%d") + " 07:00:00' and Time < '" + \
             date_i.strftime("%Y-%m-%d") + " 21:00:00' and tag like '%" + loc_i + "%' order by Time asc;"
-    x = pd.read_sql(query, conn)
+    x = conn.query(query1)
+    x = pd.DataFrame(x)
     # x = x[x["TAG"].str.contains(r'(OPC UA.(\w+).2.Tags.\w+.\w+.(\w+)-(\w-\d\w)-(.+))')]
     y = pd.concat([x["Time"], x["Tag"].str.extract(r'(\w+)-(\w+)-(\w-\w+)-(.+)'),
                    x["Value"]], axis=1)
