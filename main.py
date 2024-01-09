@@ -91,14 +91,13 @@ with col1:
 
 with hometab:
     if st.button(label="Update", use_container_width=True):
-        # st.session_state['update'] = False
         st.session_state['update'] = True
-    # if st.session_state['update']:
     #     st.cache_data.clear()
         hrs = streamlit_init(hrs)
 
     if st.session_state['update']:
         hometab.table(hrs[['Location','Last Connected Time','Address']])
+        st.session_state['update'] = False
 
 
 with col2:
