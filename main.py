@@ -72,6 +72,7 @@ def runqry(date_i,loc_i):
     y = pd.concat([x["Time"], x["Tag"].str.extract(r'(\w+)-(\w+)-(\w-\w+)-(.+)'),
                    x["Value"]], axis=1)
     y.columns = ["Time", "Location", "Attribute","Serial", "Tag", "Value"]
+    x['Tag_short']=y['Tag']
     # 연결 끊기
     # conn.close()
     return x, y
@@ -150,7 +151,6 @@ with st.sidebar:
 
 if st.session_state['plot']:
     if return_select["checked"]:
-        x['Tag_short']=y['Tag']
         y2=x.loc[x["Tag"].str.contains('|'.join(return_select["checked"])), ["Time", "Tag", "Value"]]
         try:
             tab1.line_chart(y2,x='Time',y='Value',color='Tag_short')
