@@ -136,7 +136,7 @@ with st.sidebar:
     return_select = tree_select(root, checked=[root[0]['children'][0]['children'][0]['children'][0]['value']],
                                 expanded=[root[0]['value'], root[0]['children'][0]['value'],
                                           root[0]['children'][0]['children'][0]['value']])
-	st.write(return_select)
+    st.write(return_select)
    
 
     if st.session_state['plot']:
