@@ -119,10 +119,7 @@ with st.sidebar:
             st.write(e)
         # st.session_state['plot'] = False
 
-    # try:
     x = pd.read_csv('./data/loc_i.csv')
-    # st.write(x)
-    # st.write(type(x['Time']))
     x['Time']=pd.to_datetime(x['Time'], format="%Y-%m-%d %H:%M:%S")
     y = pd.concat([x["Time"], x["Tag"].str.extract(r'(\w+)-(\w+)-(\w-\w+)-(.+)'),
                    x["Value"]], axis=1)
@@ -159,16 +156,13 @@ with st.sidebar:
                                 expanded=[root[0]['value'], root[0]['children'][0]['value'],
                                           root[0]['children'][0]['children'][0]['value']])
 
-    # except Exception as e:
-    #     print(e)
-
-if st.session_state['plot']:
-    try:
-        if return_select["checked"]:
-            y2=x.loc[x["Tag"].str.contains('|'.join(return_select["checked"])), ["Time", "Tag", "Value","Legend"]]
-            try:
-                tab1.line_chart(y2,x='Time',y='Value',color='Legend')
-            except Exception as e:
-                tab1.line_chart(y2,x='Time',y='Value')
-    except Exception as e:
-        st.write(e)
+    if st.session_state['plot']:
+        try:
+            if return_select["checked"]:
+                y2=x.loc[x["Tag"].str.contains('|'.join(return_select["checked"])), ["Time", "Tag", "Value","Legend"]]
+                try:
+                    tab1.line_chart(y2,x='Time',y='Value',color='Legend')
+                except Exception as e:
+                    tab1.line_chart(y2,x='Time',y='Value')
+        except Exception as e:
+            st.write(e)
