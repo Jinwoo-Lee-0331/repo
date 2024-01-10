@@ -43,7 +43,7 @@ hrs['Last Connected Time'] = 'Disconnected'
 
 
 # @st.cache_data(ttl=600)
-def streamlit_init(hrs):
+def streamlit_init(hrs, n):
     for idx, i in enumerate(hrs['Location']):
         query1 = (f"SELECT Time ,Tag ,Value FROM RawData"
                   f" where Tag like '%{i}%온도%' order by Time desc LIMIT 1;")
@@ -58,7 +58,7 @@ def streamlit_init(hrs):
 
 
 # @st.cache_data(ttl=600)
-def runqry(date_i, loc_i):
+def runqry(date_i, loc_i, n):
     query = "SELECT Time, Tag, Value FROM RawData where Time > '" + date_i.strftime(
         "%Y-%m-%d") + " 07:00:00' and Time < '" + \
             date_i.strftime("%Y-%m-%d") + " 21:00:00' and tag like '%" + loc_i + "%' order by Time asc;"
@@ -91,7 +91,7 @@ with hometab:
 
     if st.session_state['update']:
         try:
-            streamlit_init(hrs).to_csv('./data/hrs_update.csv', index=False, encoding='utf-8', mode='w')
+            streamlit_init(hrs, np.random.rand()).to_csv('./data/hrs_update.csv', index=False, encoding='utf-8', mode='w')
             st.session_state['update'] = False
         except Exception as e:
             st.write(e)
@@ -113,8 +113,7 @@ with (st.sidebar):
     r=[]
     if st.session_state.key:
         try:
-            r=r.update(runqry(date_i, loc_i))
-            r.to_csv('./data/loc_i.csv', encoding='utf-8', mode='w')
+            runqry(date_i, loc_i, np.random.rand()).to_csv('./data/loc_i.csv', encoding='utf-8', mode='w')
             st.session_state.key = False
         except Exception as e:
             st.write(e)
