@@ -68,14 +68,7 @@ def runqry(date_i,loc_i):
             date_i.strftime("%Y-%m-%d") + " 21:00:00' and tag like '%" + loc_i + "%' order by Time asc;"
     x = conn.query(query)
     x = pd.DataFrame(x)
-    # x = x[x["TAG"].str.contains(r'(OPC UA.(\w+).2.Tags.\w+.\w+.(\w+)-(\w-\d\w)-(.+))')]
-    y = pd.concat([x["Time"], x["Tag"].str.extract(r'(\w+)-(\w+)-(\w-\w+)-(.+)'),
-                   x["Value"]], axis=1)
-    y.columns = ["Time", "Location", "Attribute","Serial", "Tag", "Value"]
-    x['Legend']=y['Tag']
-    # 연결 끊기
-    # conn.close()
-    return x, y
+    return x
 
 if 'key' not in st.session_state:
     st.session_state.key = False
@@ -90,8 +83,6 @@ with col1:
 
 with hometab:
     if st.button(label="Update", use_container_width=True):
-        # hrs = streamlit_init(hrs)
-        # streamlit_init(hrs).to_csv('./data/hrs_update.csv', index=False, encoding='utf-8')
         st.session_state['update'] = True
     try:
         hrs_update = pd.read_csv('./data/hrs_update.csv')
@@ -102,9 +93,6 @@ with hometab:
     if st.session_state['update']:
         streamlit_init(hrs).to_csv('./data/hrs_update.csv', index=False, encoding='utf-8')
         st.session_state['update'] = False
-        # hrs_update = pd.read_csv('./data/hrs_update.csv')
-        # hometab.table(hrs_update[['Location','Last Connected Time','Address']])
-
 
 with col2:
     tab1, tab3  = st.tabs(["📈 Chart","❗ Alarm"])
@@ -115,16 +103,22 @@ with st.sidebar:
     date_i = st.sidebar.date_input(label="Select Time")
     loc_i = st.sidebar.selectbox("H2 Refueling Station",list(hrs.iloc[:,0]),index=2)
 
-    nodes=[{"label": "Query 버튼을 클릭하세요", "value": 0}]
-
     if st.button(label="Query", use_container_width=True):
-        # st.session_state.key = False
         st.session_state.key = True
         st.session_state['plot'] = True
     st.markdown("---")
 
     if st.session_state.key:
-        x, y = runqry(date_i, loc_i)
+        runqry(date_i, loc_i).to_csv('./data/loc_i.csv', index=False, encoding='utf-8')
+        st.session_state.key = False
+        # st.session_state['plot'] = False
+    
+    try:
+        x = pd.read_csv('./data/loc_i.csv')
+        y = pd.concat([x["Time"], x["Tag"].str.extract(r'(\w+)-(\w+)-(\w-\w+)-(.+)'),
+                       x["Value"]], axis=1)
+        y.columns = ["Time", "Location", "Attribute", "Serial", "Tag", "Value"]
+        x['Legend'] = y['Tag']
         z = y["Tag"]
         z = pd.concat([z, z], axis=1)
         z.drop_duplicates(inplace=True)
@@ -155,11 +149,16 @@ with st.sidebar:
         alm.set_index("Time",drop=True,inplace=True)
         tab2.dataframe(opr)
         tab3.dataframe(alm)
+    except Exception as e:
+        print(e)
 
 if st.session_state['plot']:
-    if return_select["checked"]:
-        y2=x.loc[x["Tag"].str.contains('|'.join(return_select["checked"])), ["Time", "Tag", "Value","Legend"]]
-        try:
-            tab1.line_chart(y2,x='Time',y='Value',color='Legend')
-        except Exception as e:
-            tab1.line_chart(y2,x='Time',y='Value')
+    try:        
+        if return_select["checked"]:
+            y2=x.loc[x["Tag"].str.contains('|'.join(return_select["checked"])), ["Time", "Tag", "Value","Legend"]]
+            try:
+                tab1.line_chart(y2,x='Time',y='Value',color='Legend')
+            except Exception as e:
+                tab1.line_chart(y2,x='Time',y='Value')
+    except Exception as e:
+        print(e)
