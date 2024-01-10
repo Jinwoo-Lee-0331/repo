@@ -155,15 +155,15 @@ with st.sidebar:
     #     print(e)
 
 if st.session_state['plot']:
-    opr=y[(y["Attribute"]=='STS')]
-    opr['Value']=opr['Value'].astype(bool)
-    opr.set_index("Time",drop=True,inplace=True)
-    alm=y[(y["Attribute"]=='ALM')]
-    alm['Value']=alm['Value'].astype(bool)
-    alm.set_index("Time",drop=True,inplace=True)
-    tab2.dataframe(opr)
-    tab3.dataframe(alm)
     try:
+        opr=y[(y["Attribute"]=='STS')]
+        opr['Value']=opr['Value'].astype(bool)
+        opr.set_index("Time",drop=True,inplace=True)
+        alm=y[(y["Attribute"]=='ALM')]
+        alm['Value']=alm['Value'].astype(bool)
+        alm.set_index("Time",drop=True,inplace=True)
+        tab2.dataframe(opr)
+        tab3.dataframe(alm)
         if return_select["checked"]:
             y2=x.loc[x["Tag"].str.contains('|'.join(return_select["checked"])), ["Time", "Tag", "Value","Legend"]]
             try:
