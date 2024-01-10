@@ -112,9 +112,10 @@ with st.sidebar:
         runqry(date_i, loc_i).to_csv('./data/loc_i.csv', index=False, encoding='utf-8')
         st.session_state.key = False
         # st.session_state['plot'] = False
-    
+
     try:
         x = pd.read_csv('./data/loc_i.csv')
+        x['Time']=datetime.strptime(x['Time'], "%Y-%m-%d %H:%M:%S")
         y = pd.concat([x["Time"], x["Tag"].str.extract(r'(\w+)-(\w+)-(\w-\w+)-(.+)'),
                        x["Value"]], axis=1)
         y.columns = ["Time", "Location", "Attribute", "Serial", "Tag", "Value"]
@@ -153,7 +154,7 @@ with st.sidebar:
         print(e)
 
 if st.session_state['plot']:
-    try:        
+    try:
         if return_select["checked"]:
             y2=x.loc[x["Tag"].str.contains('|'.join(return_select["checked"])), ["Time", "Tag", "Value","Legend"]]
             try:
