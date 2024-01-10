@@ -113,45 +113,45 @@ with st.sidebar:
         st.session_state.key = False
         # st.session_state['plot'] = False
 
-    try:
-        x = pd.read_csv('./data/loc_i.csv')
-        x['Time']=datetime.strptime(x['Time'], "%Y-%m-%d %H:%M:%S")
-        y = pd.concat([x["Time"], x["Tag"].str.extract(r'(\w+)-(\w+)-(\w-\w+)-(.+)'),
-                       x["Value"]], axis=1)
-        y.columns = ["Time", "Location", "Attribute", "Serial", "Tag", "Value"]
-        x['Legend'] = y['Tag']
-        z = y["Tag"]
-        z = pd.concat([z, z], axis=1)
-        z.drop_duplicates(inplace=True)
-        z.columns = ["label", "value"]
-        z = z.to_dict('records')
+    # try:
+    x = pd.read_csv('./data/loc_i.csv')
+    x['Time']=datetime.strptime(x['Time'], "%Y-%m-%d %H:%M:%S")
+    y = pd.concat([x["Time"], x["Tag"].str.extract(r'(\w+)-(\w+)-(\w-\w+)-(.+)'),
+                   x["Value"]], axis=1)
+    y.columns = ["Time", "Location", "Attribute", "Serial", "Tag", "Value"]
+    x['Legend'] = y['Tag']
+    z = y["Tag"]
+    z = pd.concat([z, z], axis=1)
+    z.drop_duplicates(inplace=True)
+    z.columns = ["label", "value"]
+    z = z.to_dict('records')
 
-        srl = y['Serial'].drop_duplicates()
-        srl_trd = []
-        for idx_i,i in enumerate(srl):
-            atr = y.loc[y['Serial'] == i, 'Attribute'].drop_duplicates()
-            atr_trd = []
-            for idx_j,j in enumerate(atr):
-                tag = y.loc[(y['Serial'] == i) & (y['Attribute'] == j), 'Tag'].drop_duplicates()
-                tag_trd = []
-                for k in tag:
-                    tag_trd.append({'label': k, 'value': j+'-'+i+'-'+k})
-                atr_trd.append({'label': j, 'value': j+'-'+i, 'children': tag_trd})
-            srl_trd.append({'label': i, 'value': i, 'children': atr_trd})
-        root=[{'label': loc_i, 'value': loc_i, 'children': srl_trd}]
-        return_select = tree_select(root, checked=[root[0]['children'][0]['children'][0]['children'][0]['value']],
-                                    expanded=[root[0]['value'], root[0]['children'][0]['value'],
-                                              root[0]['children'][0]['children'][0]['value']])
-        opr=y[(y["Attribute"]=='STS')]
-        opr['Value']=opr['Value'].astype(bool)
-        opr.set_index("Time",drop=True,inplace=True)
-        alm=y[(y["Attribute"]=='ALM')]
-        alm['Value']=alm['Value'].astype(bool)
-        alm.set_index("Time",drop=True,inplace=True)
-        tab2.dataframe(opr)
-        tab3.dataframe(alm)
-    except Exception as e:
-        print(e)
+    srl = y['Serial'].drop_duplicates()
+    srl_trd = []
+    for idx_i,i in enumerate(srl):
+        atr = y.loc[y['Serial'] == i, 'Attribute'].drop_duplicates()
+        atr_trd = []
+        for idx_j,j in enumerate(atr):
+            tag = y.loc[(y['Serial'] == i) & (y['Attribute'] == j), 'Tag'].drop_duplicates()
+            tag_trd = []
+            for k in tag:
+                tag_trd.append({'label': k, 'value': j+'-'+i+'-'+k})
+            atr_trd.append({'label': j, 'value': j+'-'+i, 'children': tag_trd})
+        srl_trd.append({'label': i, 'value': i, 'children': atr_trd})
+    root=[{'label': loc_i, 'value': loc_i, 'children': srl_trd}]
+    return_select = tree_select(root, checked=[root[0]['children'][0]['children'][0]['children'][0]['value']],
+                                expanded=[root[0]['value'], root[0]['children'][0]['value'],
+                                          root[0]['children'][0]['children'][0]['value']])
+    opr=y[(y["Attribute"]=='STS')]
+    opr['Value']=opr['Value'].astype(bool)
+    opr.set_index("Time",drop=True,inplace=True)
+    alm=y[(y["Attribute"]=='ALM')]
+    alm['Value']=alm['Value'].astype(bool)
+    alm.set_index("Time",drop=True,inplace=True)
+    tab2.dataframe(opr)
+    tab3.dataframe(alm)
+    # except Exception as e:
+    #     print(e)
 
 if st.session_state['plot']:
     try:
