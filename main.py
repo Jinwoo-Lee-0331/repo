@@ -48,7 +48,7 @@ hrs=pd.read_csv('./data/hrs.csv',header=None)
 hrs.columns=['Location','Address']
 hrs['Last Connected Time']='Disconnected'
 
-# @st.cache_data(ttl=600)
+# @st.cache_data(ttl=2000)
 def streamlit_init(hrs):
     for idx,i in enumerate(hrs['Location']):
         query1 = (f"SELECT Time ,Tag ,Value FROM RawData"
@@ -62,13 +62,20 @@ def streamlit_init(hrs):
             print(e)
     return hrs
 
-@st.cache_data(ttl=600)
+@st.cache_data(ttl=2000)
 def runqry(date_i,loc_i):
     query = "SELECT Time, Tag, Value FROM RawData where Time > '" + date_i.strftime("%Y-%m-%d") + " 07:00:00' and Time < '" + \
             date_i.strftime("%Y-%m-%d") + " 21:00:00' and tag like '%" + loc_i + "%' order by Time asc;"
     x = conn.query(query)
     x = pd.DataFrame(x)
-    return x
+    # x = x[x["TAG"].str.contains(r'(OPC UA.(\w+).2.Tags.\w+.\w+.(\w+)-(\w-\d\w)-(.+))')]
+    y = pd.concat([x["Time"], x["Tag"].str.extract(r'(\w+)-(\w+)-(\w-\w+)-(.+)'),
+                   x["Value"]], axis=1)
+    y.columns = ["Time", "Location", "Attribute","Serial", "Tag", "Value"]
+    x['Legend']=y['Tag']
+    # 연결 끊기
+    # conn.close()
+    return x, y
 
 if 'key' not in st.session_state:
     st.session_state.key = False
@@ -82,17 +89,14 @@ with col1:
     hometab, tab2  = st.tabs(["📋 Board", "📊 Operation"])
 
 with hometab:
-    hrs_update = pd.read_csv('./data/hrs_update.csv')
-    hometab.table(hrs_update[['Location','Last Connected Time','Address']])
     if st.button(label="Update", use_container_width=True):
         # hrs = streamlit_init(hrs)
         streamlit_init(hrs).to_csv('./data/hrs_update.csv', index=False, encoding='utf-8')
-        # hrs_update = pd.read_csv('./data/hrs_update.csv')
-        # st.session_state['update'] = True
+        st.session_state['update'] = True
 
-    # if st.session_state['update']:
-    #     hrs_update = pd.read_csv('./data/hrs_update.csv')
-        # hometab.table(hrs_update[['Location','Last Connected Time','Address']])
+    if st.session_state['update']:
+        hrs_update = pd.read_csv('./data/hrs_update.csv')
+        hometab.table(hrs_update[['Location','Last Connected Time','Address']])
 
 
 with col2:
@@ -108,17 +112,12 @@ with st.sidebar:
 
     if st.button(label="Query", use_container_width=True):
         # st.session_state.key = False
-        runqry(date_i, loc_i).to_csv('./data/loc_i.csv', index=False, encoding='utf-8')
         st.session_state.key = True
         st.session_state['plot'] = True
     st.markdown("---")
 
     if st.session_state.key:
-        x= pd.read_csv('./data/loc_i.csv')
-        y = pd.concat([x["Time"], x["Tag"].str.extract(r'(\w+)-(\w+)-(\w-\w+)-(.+)'),
-                       x["Value"]], axis=1)
-        y.columns = ["Time", "Location", "Attribute", "Serial", "Tag", "Value"]
-        x['Legend'] = y['Tag']
+        x, y = runqry(date_i, loc_i)
         z = y["Tag"]
         z = pd.concat([z, z], axis=1)
         z.drop_duplicates(inplace=True)
