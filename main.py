@@ -59,7 +59,7 @@ def streamlit_init(hrs):
         try:
             hrs.loc[idx,'Last Connected Time']=qry.loc[0,'Time'].strftime("%Y-%m-%d %H:%M:%S")
         except Exception as e:
-            st.write(e)
+            print(e)
     return hrs
 
 # @st.cache_data(ttl=600)
