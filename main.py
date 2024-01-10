@@ -91,7 +91,7 @@ with hometab:
         print(e)
 
     if st.session_state['update']:
-        try:            
+        try:
             streamlit_init(hrs).to_csv('./data/hrs_update.csv', index=False, encoding='utf-8')
             st.session_state['update'] = False
         except Exception as e:
@@ -150,6 +150,11 @@ with st.sidebar:
     return_select = tree_select(root, checked=[root[0]['children'][0]['children'][0]['children'][0]['value']],
                                 expanded=[root[0]['value'], root[0]['children'][0]['value'],
                                           root[0]['children'][0]['children'][0]['value']])
+
+    # except Exception as e:
+    #     print(e)
+
+if st.session_state['plot']:
     opr=y[(y["Attribute"]=='STS')]
     opr['Value']=opr['Value'].astype(bool)
     opr.set_index("Time",drop=True,inplace=True)
@@ -158,10 +163,6 @@ with st.sidebar:
     alm.set_index("Time",drop=True,inplace=True)
     tab2.dataframe(opr)
     tab3.dataframe(alm)
-    # except Exception as e:
-    #     print(e)
-
-if st.session_state['plot']:
     try:
         if return_select["checked"]:
             y2=x.loc[x["Tag"].str.contains('|'.join(return_select["checked"])), ["Time", "Tag", "Value","Legend"]]
