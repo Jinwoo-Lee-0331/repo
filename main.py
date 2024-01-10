@@ -24,18 +24,6 @@ def tunnel_connection():
 tunnel=tunnel_connection()
 tunnel.start()
 
-
-# @st.cache_resource
-# def init_connection():
-#     return pymysql.connect(
-#             host='127.0.0.1', #(local_host)
-#             user='ns0331',
-#             passwd='wlsdn1469!!',
-#             db='hmcportal',
-#             charset='utf8',
-#             port=tunnel.local_bind_port)
-# conn = init_connection()
-
 st.write(tunnel.local_bind_port)
 
 @st.cache_resource
@@ -84,6 +72,7 @@ with col1:
 with hometab:
     if st.button(label="Update", use_container_width=True):
         st.session_state['update'] = True
+
     try:
         hrs_update = pd.read_csv('./data/hrs_update.csv')
         hometab.table(hrs_update[['Location','Last Connected Time','Address']])
