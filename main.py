@@ -59,7 +59,7 @@ def streamlit_init(hrs):
         try:
             hrs.loc[idx,'Last Connected Time']=qry.loc[0,'Time'].strftime("%Y-%m-%d %H:%M:%S")
         except Exception as e:
-            print(e)
+            st.write(e)
     return hrs
 
 # @st.cache_data(ttl=600)
@@ -88,14 +88,14 @@ with hometab:
         hrs_update = pd.read_csv('./data/hrs_update.csv')
         hometab.table(hrs_update[['Location','Last Connected Time','Address']])
     except Exception as e:
-        print(e)
+        st.write(e)
 
     if st.session_state['update']:
         try:
             streamlit_init(hrs).to_csv('./data/hrs_update.csv', index=False, encoding='utf-8')
             st.session_state['update'] = False
         except Exception as e:
-            print(e)
+            st.write(e)
 
 with col2:
     tab1, tab3  = st.tabs(["📈 Chart","❗ Alarm"])
@@ -116,7 +116,7 @@ with st.sidebar:
             runqry(date_i, loc_i).to_csv('./data/loc_i.csv', encoding='utf-8')
             st.session_state.key = False
         except Exception as e:
-            print(e)
+            st.write(e)
         # st.session_state['plot'] = False
 
     # try:
@@ -171,4 +171,4 @@ if st.session_state['plot']:
             except Exception as e:
                 tab1.line_chart(y2,x='Time',y='Value')
     except Exception as e:
-        print(e)
+        st.write(e)
