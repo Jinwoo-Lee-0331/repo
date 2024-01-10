@@ -152,8 +152,7 @@ with st.sidebar:
             if return_select["checked"]:
                 y2=x.loc[x["Tag"].str.contains('|'.join(return_select["checked"])), ["Time", "Tag", "Value","Legend"]]
 		
-                try:
-                    tab1.line_chart(y2,x='Time',y='Value',color='Legend')
+                tab1.line_chart(y2,x='Time',y='Value',color='Legend')
         except Exception as e:
             st.write(e)
 st.write(y2)
