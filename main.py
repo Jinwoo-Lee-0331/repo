@@ -81,8 +81,8 @@ if 'key' not in st.session_state:
     st.session_state.key = False
 if 'plot' not in st.session_state:
     st.session_state['plot'] = False
-# if 'update' not in st.session_state:
-#     st.session_state['update'] = True
+if 'update' not in st.session_state:
+    st.session_state['update'] = False
 
 col1, col2 = st.columns(2)
 with col1:
@@ -92,13 +92,15 @@ with hometab:
     if st.button(label="Update", use_container_width=True):
         # hrs = streamlit_init(hrs)
         streamlit_init(hrs).to_csv('./data/hrs_update.csv', index=False, encoding='utf-8')
-        # st.session_state['update'] = True
+        st.session_state['update'] = True
     hrs_update = pd.read_csv('./data/hrs_update.csv')
     hometab.table(hrs_update[['Location','Last Connected Time','Address']])
 
-    # if st.session_state['update']:
-    #     hrs_update = pd.read_csv('./data/hrs_update.csv')
-    #     hometab.table(hrs_update[['Location','Last Connected Time','Address']])
+    if st.session_state['update']:
+        streamlit_init(hrs).to_csv('./data/hrs_update.csv', index=False, encoding='utf-8')
+        st.session_state['update'] = False
+        # hrs_update = pd.read_csv('./data/hrs_update.csv')
+        # hometab.table(hrs_update[['Location','Last Connected Time','Address']])
 
 
 with col2:
