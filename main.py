@@ -134,7 +134,7 @@ with st.sidebar:
         srl_trd.append({'label': i, 'value': i, 'children': atr_trd})
     root=[{'label': loc_i, 'value': loc_i, 'children': srl_trd}]
     return_select = tree_select(root, expanded=[root[0]['value'], root[0]['children'][0]['value'], root[0]['children'][0]['children'][0]['value']])
-    st.write(return_select)
+    
 
     if st.session_state['plot']:
         opr=y[(y["Attribute"]=='STS')]
