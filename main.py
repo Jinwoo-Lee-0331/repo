@@ -154,8 +154,6 @@ with st.sidebar:
 		
                 try:
                     tab1.line_chart(y2,x='Time',y='Value',color='Legend')
-                except Exception as e:
-                    tab1.line_chart(y2,x='Time',y='Value')
         except Exception as e:
             st.write(e)
 st.write(y2)
