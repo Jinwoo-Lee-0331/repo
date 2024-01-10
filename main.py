@@ -146,10 +146,7 @@ with st.sidebar:
         alm.set_index("Time",drop=True,inplace=True)
         tab2.dataframe(opr)
         tab3.dataframe(alm)
-        try:
-            if not return_select["checked"]:
-		session_state['plot']=False
-		    
+        try:   
             y2=x.loc[x["Tag"].str.contains('|'.join(return_select["checked"])), ["Time", "Tag", "Value","Legend"]]
             tab1.line_chart(y2,x='Time',y='Value',color='Legend')
         except Exception as e:
