@@ -91,9 +91,13 @@ with col1:
 with hometab:
     if st.button(label="Update", use_container_width=True):
         # hrs = streamlit_init(hrs)
-        streamlit_init(hrs).to_csv('./data/hrs_update.csv', index=False, encoding='utf-8')
+        # streamlit_init(hrs).to_csv('./data/hrs_update.csv', index=False, encoding='utf-8')
         st.session_state['update'] = True
-    hrs_update = pd.read_csv('./data/hrs_update.csv')
+    try:
+        hrs_update = pd.read_csv('./data/hrs_update.csv')
+    except Exception as e:
+        print(e)
+
     hometab.table(hrs_update[['Location','Last Connected Time','Address']])
 
     if st.session_state['update']:
