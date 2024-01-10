@@ -91,8 +91,11 @@ with hometab:
         print(e)
 
     if st.session_state['update']:
-        streamlit_init(hrs).to_csv('./data/hrs_update.csv', index=False, encoding='utf-8')
-        st.session_state['update'] = False
+        try:            
+            streamlit_init(hrs).to_csv('./data/hrs_update.csv', index=False, encoding='utf-8')
+            st.session_state['update'] = False
+        except Exception as e:
+            print(e)
 
 with col2:
     tab1, tab3  = st.tabs(["📈 Chart","❗ Alarm"])
@@ -109,8 +112,11 @@ with st.sidebar:
     st.markdown("---")
 
     if st.session_state.key:
-        runqry(date_i, loc_i).to_csv('./data/loc_i.csv', encoding='utf-8')
-        st.session_state.key = False
+        try:
+            runqry(date_i, loc_i).to_csv('./data/loc_i.csv', encoding='utf-8')
+            st.session_state.key = False
+        except Exception as e:
+            print(e)
         # st.session_state['plot'] = False
 
     # try:
