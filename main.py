@@ -62,7 +62,7 @@ def streamlit_init(hrs):
             print(e)
     return hrs
 
-@st.cache_data(ttl=600)
+# @st.cache_data(ttl=600)
 def runqry(date_i,loc_i):
     query = "SELECT Time, Tag, Value FROM RawData where Time > '" + date_i.strftime("%Y-%m-%d") + " 07:00:00' and Time < '" + \
             date_i.strftime("%Y-%m-%d") + " 21:00:00' and tag like '%" + loc_i + "%' order by Time asc;"
