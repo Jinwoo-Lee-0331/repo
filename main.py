@@ -119,14 +119,6 @@ with st.sidebar:
     z.drop_duplicates(inplace=True)
     z.columns = ["label", "value"]
     z = z.to_dict('records')
-    opr=y[(y["Attribute"]=='STS')]
-    opr['Value']=opr['Value'].astype(bool)
-    opr.set_index("Time",drop=True,inplace=True)
-    alm=y[(y["Attribute"]=='ALM')]
-    alm['Value']=alm['Value'].astype(bool)
-    alm.set_index("Time",drop=True,inplace=True)
-    tab2.dataframe(opr)
-    tab3.dataframe(alm)
 
     srl = y['Serial'].drop_duplicates()
     srl_trd = []
@@ -146,6 +138,14 @@ with st.sidebar:
                                           root[0]['children'][0]['children'][0]['value']])
 
     if st.session_state['plot']:
+        opr=y[(y["Attribute"]=='STS')]
+        opr['Value']=opr['Value'].astype(bool)
+        opr.set_index("Time",drop=True,inplace=True)
+        alm=y[(y["Attribute"]=='ALM')]
+        alm['Value']=alm['Value'].astype(bool)
+        alm.set_index("Time",drop=True,inplace=True)
+        tab2.dataframe(opr)
+        tab3.dataframe(alm)
         try:
             if return_select["checked"]:
                 y2=x.loc[x["Tag"].str.contains('|'.join(return_select["checked"])), ["Time", "Tag", "Value","Legend"]]
