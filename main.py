@@ -27,8 +27,7 @@ def tunnel_connection():
 tunnel = tunnel_connection()
 tunnel.start()
 
-st.write(tunnel.local_bind_port)
-
+# st.write(tunnel.local_bind_port)
 
 @st.cache_resource
 def init_connection():
@@ -88,8 +87,8 @@ with hometab:
         hometab.table(hrs_update[['Location', 'Last Connected Time', 'Address']])
     except Exception as e:
         st.write(e)
-    
-    
+
+
     if st.session_state['update']:
         try:
             streamlit_init(hrs).to_csv('./data/hrs_update.csv', index=False, encoding='utf-8', mode='w')
