@@ -115,8 +115,9 @@ with st.sidebar:
 
     # try:
     x = pd.read_csv('./data/loc_i.csv')
-    st.write(x)
-    # x['Time']=datetime.strptime(x['Time'], "%Y-%m-%d %H:%M:%S")
+    # st.write(x)
+    # st.write(type(x['Time']))
+    x['Time']=pd.to_datetime(x['Time'], format="%Y-%m-%d %H:%M:%S")
     y = pd.concat([x["Time"], x["Tag"].str.extract(r'(\w+)-(\w+)-(\w-\w+)-(.+)'),
                    x["Value"]], axis=1)
     y.columns = ["Time", "Location", "Attribute", "Serial", "Tag", "Value"]
