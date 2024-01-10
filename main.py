@@ -81,7 +81,7 @@ with hometab:
 
     if st.session_state['update']:
         try:
-            streamlit_init(hrs).to_csv('./data/hrs_update.csv', index=False, encoding='utf-8')
+            streamlit_init(hrs).to_csv('./data/hrs_update.csv', index=False, encoding='utf-8', mode='w')
             st.session_state['update'] = False
         except Exception as e:
             st.write(e)
@@ -102,7 +102,7 @@ with st.sidebar:
 
     if st.session_state.key:
         try:
-            runqry(date_i, loc_i).to_csv('./data/loc_i.csv', encoding='utf-8')
+            runqry(date_i, loc_i).to_csv('./data/loc_i.csv', encoding='utf-8', mode='w')
             st.session_state.key = False
         except Exception as e:
             st.write(e)
