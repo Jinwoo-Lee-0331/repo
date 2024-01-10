@@ -149,10 +149,11 @@ with st.sidebar:
         tab2.dataframe(opr)
         tab3.dataframe(alm)
         try:
-            if return_select["checked"]:
-                y2=x.loc[x["Tag"].str.contains('|'.join(return_select["checked"])), ["Time", "Tag", "Value","Legend"]]
-		
-                tab1.line_chart(y2,x='Time',y='Value',color='Legend')
+            if not return_select["checked"]:
+		session_state['plot']=False
+		    
+            y2=x.loc[x["Tag"].str.contains('|'.join(return_select["checked"])), ["Time", "Tag", "Value","Legend"]]
+            tab1.line_chart(y2,x='Time',y='Value',color='Legend')
         except Exception as e:
             st.write(e)
 st.write(y2)
