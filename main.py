@@ -109,7 +109,7 @@ with st.sidebar:
     st.markdown("---")
 
     if st.session_state.key:
-        runqry(date_i, loc_i).to_csv('./data/loc_i.csv', index=False, encoding='utf-8')
+        runqry(date_i, loc_i).to_csv('./data/loc_i.csv', encoding='utf-8')
         st.session_state.key = False
         # st.session_state['plot'] = False
 
