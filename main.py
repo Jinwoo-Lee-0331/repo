@@ -95,10 +95,9 @@ with hometab:
         st.session_state['update'] = True
     try:
         hrs_update = pd.read_csv('./data/hrs_update.csv')
+        hometab.table(hrs_update[['Location','Last Connected Time','Address']])
     except Exception as e:
         print(e)
-
-    hometab.table(hrs_update[['Location','Last Connected Time','Address']])
 
     if st.session_state['update']:
         streamlit_init(hrs).to_csv('./data/hrs_update.csv', index=False, encoding='utf-8')
