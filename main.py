@@ -82,7 +82,7 @@ if 'key' not in st.session_state:
 if 'plot' not in st.session_state:
     st.session_state['plot'] = False
 if 'update' not in st.session_state:
-    st.session_state['update'] = False
+    st.session_state['update'] = True
 
 col1, col2 = st.columns(2)
 with col1:
