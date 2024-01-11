@@ -73,10 +73,10 @@ with col1:
 
 with hometab:
     if st.button(label="Update", use_container_width=True):
-        hrs_update = streamlit_init(hrs, np.random.rand())
+        st.session_state['hrs_update'] = streamlit_init(hrs, np.random.rand())
 
 try:
-    hometab.table(hrs_update[['Location', 'Last Connected Time', 'Address']])
+    hometab.table(st.session_state['hrs_update'][['Location', 'Last Connected Time', 'Address']])
 except Exception as e:
     # st.write(e)
     print(e)
@@ -96,7 +96,7 @@ with (st.sidebar):
     st.markdown("---")
 
     try:
-        x = pd.read_csv('./data/loc_i.csv')
+        # x = pd.read_csv('./data/loc_i.csv')
         x['Time'] = pd.to_datetime(x['Time'], format="%Y-%m-%d %H:%M:%S")
         y = pd.concat([x["Time"], x["Tag"].str.extract(r'(\w+)-(\w+)-(\w-\w+)-(.+)'),
                        x["Value"]], axis=1)
