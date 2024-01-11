@@ -27,7 +27,7 @@ def tunnel_connection():
 def init_connection():
     return st.experimental_connection('hmc_db', type="sql")
 
-@st.cache_data()
+@st.cache_data(ttl=600)
 def streamlit_init(hrs, n):
     for idx, i in enumerate(hrs['Location']):
         query1 = (f"SELECT Time ,Tag ,Value FROM RawData"
@@ -79,7 +79,7 @@ with hometab:
         st.session_state['update']=True
     if st.session_state['update']:
         try:
-            hometab.table(st.session_state['hrs_update'][['Location', 'Last Connected Time', 'Address']])
+            hometab.table(hrs_update[['Location', 'Last Connected Time', 'Address']])
         except Exception as e:
             # st.write(e)
             print(e)
