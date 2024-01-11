@@ -36,8 +36,6 @@ tunnel.start()
 #             port=tunnel.local_bind_port)
 # conn = init_connection()
 
-st.write(tunnel.local_bind_port)
-
 @st.cache_resource
 def init_connection():
     return st.experimental_connection('hmc_db',type="sql")
@@ -84,6 +82,7 @@ if 'plot' not in st.session_state:
 if 'update' not in st.session_state:
     st.session_state['update'] = True
 
+st.write(tunnel.local_bind_port)
 col1, col2 = st.columns(2)
 with col1:
     hometab, tab2  = st.tabs(["📋 Board", "📊 Operation"])
