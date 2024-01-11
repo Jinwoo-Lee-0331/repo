@@ -27,7 +27,7 @@ def tunnel_connection():
 def init_connection():
     return st.experimental_connection('hmc_db', type="sql")
 
-@st.cache_data(ttl=600)
+@st.cache_data(ttl=1200)
 def streamlit_init(hrs):
     for idx, i in enumerate(hrs['Location']):
         query1 = (f"SELECT Time ,Tag ,Value FROM RawData"
@@ -42,7 +42,7 @@ def streamlit_init(hrs):
     return hrs
 
 
-@st.cache_data(ttl=600)
+@st.cache_data(ttl=1200)
 def runqry(date_i, loc_i):
     query = "SELECT Time, Tag, Value FROM RawData where Time > '" + date_i.strftime(
         "%Y-%m-%d") + " 07:00:00' and Time < '" + \
@@ -78,7 +78,6 @@ with hometab:
         try:
             hometab.table(hrs_update[['Location', 'Last Connected Time', 'Address']])
         except Exception as e:
-            # st.write(e)
             print(e)
 
 with col2:
@@ -98,7 +97,6 @@ with (st.sidebar):
 
     if st.session_state.key:
         try:
-            x['Time'] = pd.to_datetime(x['Time'], format="%Y-%m-%d %H:%M:%S")
             y = pd.concat([x["Time"], x["Tag"].str.extract(r'(\w+)-(\w+)-(\w-\w+)-(.+)'),
                            x["Value"]], axis=1)
             y.columns = ["Time", "Location", "Attribute", "Serial", "Tag", "Value"]
