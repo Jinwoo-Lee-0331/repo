@@ -74,11 +74,12 @@ with col1:
 with hometab:
     if st.button(label="Update", use_container_width=True):
         hrs_update = streamlit_init(hrs, np.random.rand())
-    try:
-        hometab.table(hrs_update[['Location', 'Last Connected Time', 'Address']])
-    except Exception as e:
-        # st.write(e)
-        print(e)
+        
+try:
+    hometab.table(hrs_update[['Location', 'Last Connected Time', 'Address']])
+except Exception as e:
+    # st.write(e)
+    print(e)
 
 with col2:
     tab1, tab3 = st.tabs(["📈 Chart", "❗ Alarm"])
