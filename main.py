@@ -38,7 +38,7 @@ def streamlit_init(hrs, n):
         try:
             hrs.loc[idx, 'Last Connected Time'] = qry.loc[0, 'Time'].strftime("%Y-%m-%d %H:%M:%S")
         except Exception as e:
-            print(e)
+            print(n,e)
     return hrs
 
 
@@ -49,6 +49,7 @@ def runqry(date_i, loc_i, n):
             date_i.strftime("%Y-%m-%d") + " 21:00:00' and tag like '%" + loc_i + "%' order by Time asc;"
     x = conn.query(query)
     x = pd.DataFrame(x)
+    print(n)
     return x
 
 if 'key' not in st.session_state:
@@ -75,7 +76,7 @@ with hometab:
     if st.button(label="Update", use_container_width=True):
         hrs_update = streamlit_init(hrs, np.random.rand())
         st.session_state['update']=True
-    if st.session_state['update']:     
+    if st.session_state['update']:
         try:
             hometab.table(st.session_state['hrs_update'][['Location', 'Last Connected Time', 'Address']])
         except Exception as e:
