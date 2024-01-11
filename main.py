@@ -74,7 +74,8 @@ with col1:
 
 with hometab:
     if st.button(label="Update", use_container_width=True):
-        hrs_update = streamlit_init(hrs, np.random.rand())
+        n = np.random.rand()
+        hrs_update = streamlit_init(hrs, n)
         st.session_state['update']=True
     if st.session_state['update']:
         try:
@@ -93,7 +94,8 @@ with (st.sidebar):
     loc_i = st.sidebar.selectbox("H2 Refueling Station", list(hrs.iloc[:, 0]), index=2)
 
     if st.button(label="Query", use_container_width=True):
-        x = runqry(date_i, loc_i, np.random.rand())
+        n = np.random.rand()
+        x = runqry(date_i, loc_i, n)
         st.session_state.key = True
     st.markdown("---")
 
