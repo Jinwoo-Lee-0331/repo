@@ -28,7 +28,7 @@ def init_connection():
     return st.experimental_connection('hmc_db', type="sql")
 
 @st.cache_data(ttl=600)
-def streamlit_init(hrs, n):
+def streamlit_init(hrs):
     for idx, i in enumerate(hrs['Location']):
         query1 = (f"SELECT Time ,Tag ,Value FROM RawData"
                   f" where Tag like '%{i}%온도%' order by Time desc LIMIT 1;")
@@ -43,10 +43,10 @@ def streamlit_init(hrs, n):
 
 
 @st.cache_data(ttl=600)
-def runqry(date_i, loc_i, n):
-    query = "SELECT Time, Tag, Value FROM RawData where Time > '" + date_i.strftime(
-        "%Y-%m-%d") + " 07:00:00' and Time < '" + \
-            date_i.strftime("%Y-%m-%d") + " 21:00:00' and tag like '%" + loc_i + "%' order by Time asc;"
+def runqry(date_i, loc_i):
+    query = ("SELECT Time, Tag, Value FROM RawData where Time > '" + date_i.strftime("%Y-%m-%d") +
+             " 07:00:00' and Time < '" + date_i.strftime("%Y-%m-%d") + " 21:00:00' and tag like '%" +
+             loc_i + "%' order by Time asc;")
     x = conn.query(query)
     x = pd.DataFrame(x)
     print(n)
@@ -74,8 +74,8 @@ with col1:
 
 with hometab:
     if st.button(label="Update", use_container_width=True):
-        n = datetime.now()
-        hrs_update = streamlit_init(hrs, n)
+        streamlit_init.clear()
+        hrs_update = streamlit_init(hrs)
         st.session_state['update']=True
     if st.session_state['update']:
         try:
@@ -94,8 +94,8 @@ with (st.sidebar):
     loc_i = st.sidebar.selectbox("H2 Refueling Station", list(hrs.iloc[:, 0]), index=2)
 
     if st.button(label="Query", use_container_width=True):
-        n = datetime.now()
-        x = runqry(date_i, loc_i, n)
+        runqry.clear()
+        x = runqry(date_i, loc_i)
         st.session_state.key = True
     st.markdown("---")
 
