@@ -73,13 +73,14 @@ with col1:
 
 with hometab:
     if st.button(label="Update", use_container_width=True):
-        st.session_state['hrs_update'] = streamlit_init(hrs, np.random.rand())
-
-try:
-    hometab.table(st.session_state['hrs_update'][['Location', 'Last Connected Time', 'Address']])
-except Exception as e:
-    # st.write(e)
-    print(e)
+        hrs_update = streamlit_init(hrs, np.random.rand())
+        st.session_state['update']=True
+    if st.session_state['update']:     
+        try:
+            hometab.table(st.session_state['hrs_update'][['Location', 'Last Connected Time', 'Address']])
+        except Exception as e:
+            # st.write(e)
+            print(e)
 
 with col2:
     tab1, tab3 = st.tabs(["📈 Chart", "❗ Alarm"])
