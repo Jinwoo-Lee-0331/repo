@@ -96,7 +96,7 @@ with (st.sidebar):
         st.session_state.key = True
     st.markdown("---")
 
-    try:
+    if st.session_state.key:
         # x = pd.read_csv('./data/loc_i.csv')
         x = runqry(date_i, loc_i, np.random.rand())
         x['Time'] = pd.to_datetime(x['Time'], format="%Y-%m-%d %H:%M:%S")
@@ -125,22 +125,20 @@ with (st.sidebar):
         return_select = tree_select(root, checked=[root[0]['children'][0]['children'][0]['children'][0]['value']],
                                     expanded=[root[0]['value'], root[0]['children'][0]['value'],
                                               root[0]['children'][0]['children'][0]['value']])
-    except Exception as e:
-        print(e)
 
-    try:
-        opr = y[(y["Attribute"] == 'STS')]
-        opr['Value'] = opr['Value'].astype(bool)
-        opr.set_index("Time", drop=True, inplace=True)
-        alm = y[(y["Attribute"] == 'ALM')]
-        alm['Value'] = alm['Value'].astype(bool)
-        alm.set_index("Time", drop=True, inplace=True)
-        tab2.dataframe(opr)
-        tab3.dataframe(alm)
         try:
-            y2 = x.loc[x["Tag"].str.contains('|'.join(return_select["checked"])), ["Time", "Tag", "Value", "Legend"]]
-            tab1.line_chart(y2, x='Time', y='Value', color='Legend')
+            opr = y[(y["Attribute"] == 'STS')]
+            opr['Value'] = opr['Value'].astype(bool)
+            opr.set_index("Time", drop=True, inplace=True)
+            alm = y[(y["Attribute"] == 'ALM')]
+            alm['Value'] = alm['Value'].astype(bool)
+            alm.set_index("Time", drop=True, inplace=True)
+            tab2.dataframe(opr)
+            tab3.dataframe(alm)
+            try:
+                y2 = x.loc[x["Tag"].str.contains('|'.join(return_select["checked"])), ["Time", "Tag", "Value", "Legend"]]
+                tab1.line_chart(y2, x='Time', y='Value', color='Legend')
+            except Exception as e:
+                st.write(e)
         except Exception as e:
-            st.write(e)
-    except Exception as e:
-        print(e)
+            print(e)
