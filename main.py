@@ -23,24 +23,11 @@ def tunnel_connection():
                               ssh_password=st.secrets["ssh_password"],
                               remote_bind_address=(st.secrets["remote_bind_address"], st.secrets["remote_bind_port"]))
 
-
-tunnel = tunnel_connection()
-tunnel.start()
-
 # st.write(tunnel.local_bind_port)
 
 @st.cache_resource
 def init_connection():
     return st.experimental_connection('hmc_db', type="sql")
-
-
-conn = init_connection()
-
-hrs = pd.read_csv('./data/hrs.csv', header=None)
-# hrs=pd.read_csv('C:\\Users\\researcher\\Desktop\\hrs.csv',header=None)
-hrs.columns = ['Location', 'Address']
-hrs['Last Connected Time'] = 'Disconnected'
-
 
 @st.cache_data(ttl=600)
 def streamlit_init(hrs, n):
@@ -66,7 +53,6 @@ def runqry(date_i, loc_i, n):
     x = pd.DataFrame(x)
     return x
 
-
 if 'key' not in st.session_state:
     st.session_state.key = False
 if 'plot' not in st.session_state:
@@ -74,27 +60,26 @@ if 'plot' not in st.session_state:
 if 'update' not in st.session_state:
     st.session_state['update'] = False
 
+tunnel = tunnel_connection()
+tunnel.start()
+conn = init_connection()
+hrs = pd.read_csv('./data/hrs.csv', header=None)
+# hrs=pd.read_csv('C:\\Users\\researcher\\Desktop\\hrs.csv',header=None)
+hrs.columns = ['Location', 'Address']
+hrs['Last Connected Time'] = 'Disconnected'
+
 col1, col2 = st.columns(2)
 with col1:
     hometab, tab2 = st.tabs(["📋 Board", "📊 Operation"])
 
 with hometab:
     if st.button(label="Update", use_container_width=True):
-        st.session_state['update'] = True
-
+        hrs_update = streamlit_init(hrs, np.random.rand())
     try:
-        hrs_update = pd.read_csv('./data/hrs_update.csv')
         hometab.table(hrs_update[['Location', 'Last Connected Time', 'Address']])
     except Exception as e:
-        st.write(e)
-
-
-    if st.session_state['update']:
-        try:
-            streamlit_init(hrs, np.random.rand()).to_csv('./data/hrs_update.csv', index=False, encoding='utf-8', mode='w')
-            st.session_state['update'] = False
-        except Exception as e:
-            st.write(e)
+        # st.write(e)
+        print(e)
 
 with col2:
     tab1, tab3 = st.tabs(["📈 Chart", "❗ Alarm"])
@@ -106,47 +91,38 @@ with (st.sidebar):
     loc_i = st.sidebar.selectbox("H2 Refueling Station", list(hrs.iloc[:, 0]), index=2)
 
     if st.button(label="Query", use_container_width=True):
-        st.session_state.key = True
+        x = runqry(date_i, loc_i, np.random.rand())
         st.session_state['plot'] = True
     st.markdown("---")
 
-    r=[]
-    if st.session_state.key:
-        try:
-            runqry(date_i, loc_i, np.random.rand()).to_csv('./data/loc_i.csv', encoding='utf-8', mode='w')
-            st.session_state.key = False
-        except Exception as e:
-            st.write(e)
-        # st.session_state['plot'] = False
-
-    x = pd.read_csv('./data/loc_i.csv')
-    x['Time'] = pd.to_datetime(x['Time'], format="%Y-%m-%d %H:%M:%S")
-    y = pd.concat([x["Time"], x["Tag"].str.extract(r'(\w+)-(\w+)-(\w-\w+)-(.+)'),
-                   x["Value"]], axis=1)
-    y.columns = ["Time", "Location", "Attribute", "Serial", "Tag", "Value"]
-    x['Legend'] = y['Tag']
-    z = y["Tag"]
-    z = pd.concat([z, z], axis=1)
-    z.drop_duplicates(inplace=True)
-    z.columns = ["label", "value"]
-    z = z.to_dict('records')
-
-    srl = y['Serial'].drop_duplicates()
-    srl_trd = []
-    for idx_i, i in enumerate(srl):
-        atr = y.loc[y['Serial'] == i, 'Attribute'].drop_duplicates()
-        atr_trd = []
-        for idx_j, j in enumerate(atr):
-            tag = y.loc[(y['Serial'] == i) & (y['Attribute'] == j), 'Tag'].drop_duplicates()
-            tag_trd = []
-            for k in tag:
-                tag_trd.append({'label': k, 'value': j + '-' + i + '-' + k})
-            atr_trd.append({'label': j, 'value': j + '-' + i, 'children': tag_trd})
-        srl_trd.append({'label': i, 'value': i, 'children': atr_trd})
-    root = [{'label': loc_i, 'value': loc_i, 'children': srl_trd}]
-    return_select = tree_select(root, checked=[root[0]['children'][0]['children'][0]['children'][0]['value']],
-                                expanded=[root[0]['value'], root[0]['children'][0]['value'],
-                                          root[0]['children'][0]['children'][0]['value']])
+    try:
+        x = pd.read_csv('./data/loc_i.csv')
+        x['Time'] = pd.to_datetime(x['Time'], format="%Y-%m-%d %H:%M:%S")
+        y = pd.concat([x["Time"], x["Tag"].str.extract(r'(\w+)-(\w+)-(\w-\w+)-(.+)'),
+                       x["Value"]], axis=1)
+        y.columns = ["Time", "Location", "Attribute", "Serial", "Tag", "Value"]
+        x['Legend'] = y['Tag']
+        z = y["Tag"]
+        z = pd.concat([z, z], axis=1)
+        z.drop_duplicates(inplace=True)
+        z.columns = ["label", "value"]
+        z = z.to_dict('records')
+        srl = y['Serial'].drop_duplicates()
+        srl_trd = []
+        for idx_i, i in enumerate(srl):
+            atr = y.loc[y['Serial'] == i, 'Attribute'].drop_duplicates()
+            atr_trd = []
+            for idx_j, j in enumerate(atr):
+                tag = y.loc[(y['Serial'] == i) & (y['Attribute'] == j), 'Tag'].drop_duplicates()
+                tag_trd = []
+                for k in tag:
+                    tag_trd.append({'label': k, 'value': j + '-' + i + '-' + k})
+                atr_trd.append({'label': j, 'value': j + '-' + i, 'children': tag_trd})
+            srl_trd.append({'label': i, 'value': i, 'children': atr_trd})
+        root = [{'label': loc_i, 'value': loc_i, 'children': srl_trd}]
+        return_select = tree_select(root, checked=[root[0]['children'][0]['children'][0]['children'][0]['value']],
+                                    expanded=[root[0]['value'], root[0]['children'][0]['value'],
+                                              root[0]['children'][0]['children'][0]['value']])
 
     if st.session_state['plot']:
         opr = y[(y["Attribute"] == 'STS')]
