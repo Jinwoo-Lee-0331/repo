@@ -97,32 +97,35 @@ with (st.sidebar):
     st.markdown("---")
 
     if st.session_state.key:
-        x['Time'] = pd.to_datetime(x['Time'], format="%Y-%m-%d %H:%M:%S")
-        y = pd.concat([x["Time"], x["Tag"].str.extract(r'(\w+)-(\w+)-(\w-\w+)-(.+)'),
-                       x["Value"]], axis=1)
-        y.columns = ["Time", "Location", "Attribute", "Serial", "Tag", "Value"]
-        x['Legend'] = y['Tag']
-        z = y["Tag"]
-        z = pd.concat([z, z], axis=1)
-        z.drop_duplicates(inplace=True)
-        z.columns = ["label", "value"]
-        z = z.to_dict('records')
-        srl = y['Serial'].drop_duplicates()
-        srl_trd = []
-        for idx_i, i in enumerate(srl):
-            atr = y.loc[y['Serial'] == i, 'Attribute'].drop_duplicates()
-            atr_trd = []
-            for idx_j, j in enumerate(atr):
-                tag = y.loc[(y['Serial'] == i) & (y['Attribute'] == j), 'Tag'].drop_duplicates()
-                tag_trd = []
-                for k in tag:
-                    tag_trd.append({'label': k, 'value': j + '-' + i + '-' + k})
-                atr_trd.append({'label': j, 'value': j + '-' + i, 'children': tag_trd})
-            srl_trd.append({'label': i, 'value': i, 'children': atr_trd})
-        root = [{'label': loc_i, 'value': loc_i, 'children': srl_trd}]
-        return_select = tree_select(root, checked=[root[0]['children'][0]['children'][0]['children'][0]['value']],
-                                    expanded=[root[0]['value'], root[0]['children'][0]['value'],
-                                              root[0]['children'][0]['children'][0]['value']])
+        try:
+            x['Time'] = pd.to_datetime(x['Time'], format="%Y-%m-%d %H:%M:%S")
+            y = pd.concat([x["Time"], x["Tag"].str.extract(r'(\w+)-(\w+)-(\w-\w+)-(.+)'),
+                           x["Value"]], axis=1)
+            y.columns = ["Time", "Location", "Attribute", "Serial", "Tag", "Value"]
+            x['Legend'] = y['Tag']
+            z = y["Tag"]
+            z = pd.concat([z, z], axis=1)
+            z.drop_duplicates(inplace=True)
+            z.columns = ["label", "value"]
+            z = z.to_dict('records')
+            srl = y['Serial'].drop_duplicates()
+            srl_trd = []
+            for idx_i, i in enumerate(srl):
+                atr = y.loc[y['Serial'] == i, 'Attribute'].drop_duplicates()
+                atr_trd = []
+                for idx_j, j in enumerate(atr):
+                    tag = y.loc[(y['Serial'] == i) & (y['Attribute'] == j), 'Tag'].drop_duplicates()
+                    tag_trd = []
+                    for k in tag:
+                        tag_trd.append({'label': k, 'value': j + '-' + i + '-' + k})
+                    atr_trd.append({'label': j, 'value': j + '-' + i, 'children': tag_trd})
+                srl_trd.append({'label': i, 'value': i, 'children': atr_trd})
+            root = [{'label': loc_i, 'value': loc_i, 'children': srl_trd}]
+            return_select = tree_select(root, checked=[root[0]['children'][0]['children'][0]['children'][0]['value']],
+                                        expanded=[root[0]['value'], root[0]['children'][0]['value'],
+                                                  root[0]['children'][0]['children'][0]['value']])
+        except Exception as e:
+            st.write(e)
 
         try:
             opr = y[(y["Attribute"] == 'STS')]
