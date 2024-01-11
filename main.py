@@ -55,8 +55,8 @@ def runqry(date_i, loc_i, n):
 
 if 'key' not in st.session_state:
     st.session_state.key = False
-if 'plot' not in st.session_state:
-    st.session_state['plot'] = False
+# if 'plot' not in st.session_state:
+#     st.session_state['plot'] = False
 if 'update' not in st.session_state:
     st.session_state['update'] = False
 
@@ -92,7 +92,7 @@ with (st.sidebar):
 
     if st.button(label="Query", use_container_width=True):
         x = runqry(date_i, loc_i, np.random.rand())
-        st.session_state['plot'] = True
+        st.session_state.key = True
     st.markdown("---")
 
     try:
@@ -123,8 +123,10 @@ with (st.sidebar):
         return_select = tree_select(root, checked=[root[0]['children'][0]['children'][0]['children'][0]['value']],
                                     expanded=[root[0]['value'], root[0]['children'][0]['value'],
                                               root[0]['children'][0]['children'][0]['value']])
+    except Exception as e:
+        print(e)
 
-    if st.session_state['plot']:
+    try:
         opr = y[(y["Attribute"] == 'STS')]
         opr['Value'] = opr['Value'].astype(bool)
         opr.set_index("Time", drop=True, inplace=True)
@@ -138,3 +140,5 @@ with (st.sidebar):
             tab1.line_chart(y2, x='Time', y='Value', color='Legend')
         except Exception as e:
             st.write(e)
+    except Exception as e:
+        print(e)
