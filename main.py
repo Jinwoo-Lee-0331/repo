@@ -27,7 +27,7 @@ def tunnel_connection():
 def init_connection():
     return st.experimental_connection('hmc_db', type="sql")
 
-@st.cache_data(ttl=600)
+@st.cache_data()
 def streamlit_init(hrs, n):
     for idx, i in enumerate(hrs['Location']):
         query1 = (f"SELECT Time ,Tag ,Value FROM RawData"
@@ -74,7 +74,7 @@ with col1:
 with hometab:
     if st.button(label="Update", use_container_width=True):
         hrs_update = streamlit_init(hrs, np.random.rand())
-        
+
 try:
     hometab.table(hrs_update[['Location', 'Last Connected Time', 'Address']])
 except Exception as e:
