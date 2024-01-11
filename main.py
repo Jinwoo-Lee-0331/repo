@@ -97,6 +97,7 @@ with (st.sidebar):
 
     try:
         # x = pd.read_csv('./data/loc_i.csv')
+        x = runqry(date_i, loc_i, np.random.rand())
         x['Time'] = pd.to_datetime(x['Time'], format="%Y-%m-%d %H:%M:%S")
         y = pd.concat([x["Time"], x["Tag"].str.extract(r'(\w+)-(\w+)-(\w-\w+)-(.+)'),
                        x["Value"]], axis=1)
