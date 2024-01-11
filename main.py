@@ -62,6 +62,7 @@ if 'update' not in st.session_state:
 
 tunnel = tunnel_connection()
 tunnel.start()
+st.write(tunnel.local_bind_port)
 conn = init_connection()
 hrs = pd.read_csv('./data/hrs.csv', header=None)
 # hrs=pd.read_csv('C:\\Users\\researcher\\Desktop\\hrs.csv',header=None)
