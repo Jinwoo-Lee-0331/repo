@@ -46,7 +46,7 @@ hrs=pd.read_csv('./data/hrs.csv',header=None)
 hrs.columns=['Location','Address']
 hrs['Last Connected Time']='Disconnected'
 
-# @st.cache_data(ttl=600)
+@st.cache_data(ttl=600)
 def streamlit_init(hrs):
     for idx,i in enumerate(hrs['Location']):
         query1 = (f"SELECT Time ,Tag ,Value FROM RawData"
@@ -60,7 +60,7 @@ def streamlit_init(hrs):
             print(e)
     return hrs
 
-@st.cache_data(ttl=600)
+st.cache_data(ttl=600)
 def runqry(date_i,loc_i):
     query = "SELECT Time, Tag, Value FROM RawData where Time > '" + date_i.strftime("%Y-%m-%d") + " 07:00:00' and Time < '" + \
             date_i.strftime("%Y-%m-%d") + " 21:00:00' and tag like '%" + loc_i + "%' order by Time asc;"
