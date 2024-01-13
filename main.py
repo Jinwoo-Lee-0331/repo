@@ -149,7 +149,7 @@ with st.sidebar:
 
 if st.session_state['plot']:
     if return_select["checked"]:
-        y2=x.loc[x["Tag"].str.contains('|'.join(return_select["checked"])), ["Time", "Tag", "Value","Legend"]]
+        y2=x.loc[x["Tag"].str.contains('|'.join(return_select["checked"])), ["Time", "Tag", "Value","Legend"]].reset_index(drop=True, inplace=True)
         try:
             tab1.line_chart(y2,x='Time',y='Value',color='Legend')
         except Exception as e:
