@@ -101,6 +101,7 @@ if 'update_key' not in st.session_state:
 if 'update' not in st.session_state:
     st.session_state['update'] = False
 
+st.write(tunnel.local_bind_port)
 col1, col2 = st.columns(2)
 with col1:
     hometab, tab2 = st.tabs(["📋 Board", "📊 Operation"])
