@@ -39,7 +39,7 @@ def main():
 
     with st.sidebar:
         uploaded_files = st.file_uploader("Upload your file", type=['pdf', 'docx'], accept_multiple_files=True)
-        process = st.button("Process")
+        process = st.button("문서 학습")
         openai_api_key = st.secrets["api_key"]
         with st.spinner("Thinking..."):
             if process:
