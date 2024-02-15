@@ -39,18 +39,20 @@ def main():
 
     with st.sidebar:
         uploaded_files = st.file_uploader("Upload your file", type=['pdf', 'docx'], accept_multiple_files=True)
-        process = st.button("문서 학습")
+        process = st.button("Process")
         openai_api_key = st.secrets["api_key"]
-        if process:
-            if not openai_api_key:
-                st.info("Please add your OpenAI API key to continue.")
-                st.stop()
-            files_text = get_text(uploaded_files)
-            text_chunks = get_text_chunks(files_text)
-            vetorestore = get_vectorstore(text_chunks)        
-            st.session_state.conversation = get_conversation_chain(vetorestore, openai_api_key)        
-            st.session_state.processComplete = True
-    
+        with st.spinner("Thinking..."):
+            if process:
+                if not openai_api_key:
+                    st.info("Please add your OpenAI API key to continue.")
+                    st.stop()
+                files_text = get_text(uploaded_files)
+                text_chunks = get_text_chunks(files_text)
+                vetorestore = get_vectorstore(text_chunks)        
+                st.session_state.conversation = get_conversation_chain(vetorestore, openai_api_key)        
+                st.session_state.processComplete = True
+
+
     # Chat logic
     if st.session_state.processComplete:
         if 'messages' not in st.session_state:
@@ -87,7 +89,7 @@ def main():
             st.session_state.messages.append({"role": "assistant", "content": response})
     else:
         if "messages" not in st.session_state:
-            st.session_state["messages"] = [{"role": "assistant", "content": "안녕하세요! 궁금한 것이 있으면 언제든 물어보세요"}]
+            st.session_state["messages"] = [{"role": "assistant", "content": "안녕하세요? 궁금한 것이 있으면 물어보세요"}]
 
         for msg in st.session_state.messages:
             st.chat_message(msg["role"]).write(msg["content"])
