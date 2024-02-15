@@ -18,6 +18,7 @@ from langchain.vectorstores import FAISS
 # from streamlit_chat import message
 from langchain.callbacks import get_openai_callback
 from langchain.memory import StreamlitChatMessageHistory
+from openai import OpenAI
 
 
 def main():
@@ -63,29 +64,48 @@ def main():
     history = StreamlitChatMessageHistory(key="chat_messages")
 
     # Chat logic
-    if query := st.chat_input("질문을 입력해주세요."):
-        st.session_state.messages.append({"role": "user", "content": query})
-
-        with st.chat_message("user"):
-            st.markdown(query)
-
-        with st.chat_message("assistant"):
-            chain = st.session_state.conversation
-
-            with st.spinner("Thinking..."):
-                result = chain({"question": query})
-                with get_openai_callback() as cb:
-                    st.session_state.chat_history = result['chat_history']
-                response = result['answer']
-                source_documents = result['source_documents']
-
-                st.markdown(response)
-                with st.expander("참고 문서 확인"):
-                    st.markdown(source_documents[0].metadata['source'], help=source_documents[0].page_content)
-                    st.markdown(source_documents[1].metadata['source'], help=source_documents[1].page_content)
-
-        # Add assistant message to chat history
-        st.session_state.messages.append({"role": "assistant", "content": response})
+    if st.session_state.processComplete:
+        if query := st.chat_input("질문을 입력해주세요."):
+            st.session_state.messages.append({"role": "user", "content": query})
+    
+            with st.chat_message("user"):
+                st.markdown(query)
+    
+            with st.chat_message("assistant"):
+                chain = st.session_state.conversation
+    
+                with st.spinner("Thinking..."):                
+                    result = chain({"question": query})
+                    with get_openai_callback() as cb:
+                        st.session_state.chat_history = result['chat_history']
+                    response = result['answer']
+                    source_documents = result['source_documents']
+    
+                    st.markdown(response)
+                    with st.expander("참고 문서 확인"):
+                        st.markdown(source_documents[0].metadata['source'], help=source_documents[0].page_content)
+                        st.markdown(source_documents[1].metadata['source'], help=source_documents[1].page_content)
+            # Add assistant message to chat history
+            st.session_state.messages.append({"role": "assistant", "content": response})                        
+    else:
+        if "messages" not in st.session_state:
+            st.session_state["messages"] = [{"role": "assistant", "content": "How can I help you?"}]
+    
+        for msg in st.session_state.messages:
+            st.chat_message(msg["role"]).write(msg["content"])
+    
+        if prompt := st.chat_input():
+            if not openai_api_key:
+                st.info("Please add your OpenAI API key to continue.")
+                st.stop()
+    
+            client = OpenAI(api_key=openai_api_key)
+            st.session_state.messages.append({"role": "user", "content": prompt})
+            st.chat_message("user").write(prompt)
+            response = client.chat.completions.create(model="gpt-3.5-turbo", messages=st.session_state.messages)
+            msg = response.choices[0].message.content
+            st.session_state.messages.append({"role": "assistant", "content": msg})
+            st.chat_message("assistant").write(msg)
 
 
 def tiktoken_len(text):
