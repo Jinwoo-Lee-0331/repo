@@ -41,16 +41,15 @@ def main():
         uploaded_files = st.file_uploader("Upload your file", type=['pdf', 'docx'], accept_multiple_files=True)
         process = st.button("문서 학습")
         openai_api_key = st.secrets["api_key"]
-        with st.spinner("Thinking..."):
-            if process:
-                if not openai_api_key:
-                    st.info("Please add your OpenAI API key to continue.")
-                    st.stop()
-                files_text = get_text(uploaded_files)
-                text_chunks = get_text_chunks(files_text)
-                vetorestore = get_vectorstore(text_chunks)        
-                st.session_state.conversation = get_conversation_chain(vetorestore, openai_api_key)        
-                st.session_state.processComplete = True
+        if process:
+            if not openai_api_key:
+                st.info("Please add your OpenAI API key to continue.")
+                st.stop()
+            files_text = get_text(uploaded_files)
+            text_chunks = get_text_chunks(files_text)
+            vetorestore = get_vectorstore(text_chunks)        
+            st.session_state.conversation = get_conversation_chain(vetorestore, openai_api_key)        
+            st.session_state.processComplete = True
     
     # Chat logic
     if st.session_state.processComplete:
