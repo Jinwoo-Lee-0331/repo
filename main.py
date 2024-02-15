@@ -39,8 +39,9 @@ def main():
 
     with st.sidebar:
         uploaded_files = st.file_uploader("Upload your file", type=['pdf', 'docx'], accept_multiple_files=True)
-        process = st.button("Process")
+        process = st.button("문서 학습")
         openai_api_key = st.secrets["api_key"]
+        on = st.toggle('문서기반 답변 여부')
         with st.spinner("Thinking..."):
             if process:
                 if not openai_api_key:
@@ -48,13 +49,13 @@ def main():
                     st.stop()
                 files_text = get_text(uploaded_files)
                 text_chunks = get_text_chunks(files_text)
-                vetorestore = get_vectorstore(text_chunks)        
-                st.session_state.conversation = get_conversation_chain(vetorestore, openai_api_key)        
+                vetorestore = get_vectorstore(text_chunks)
+                st.session_state.conversation = get_conversation_chain(vetorestore, openai_api_key)
                 st.session_state.processComplete = True
 
 
     # Chat logic
-    if st.session_state.processComplete:
+    if on:
         if 'messages' not in st.session_state:
             st.session_state['messages'] = [{"role": "assistant",
                                              "content": "안녕하세요! 주어진 문서에 대해 궁금하신 것이 있으면 언제든 물어봐주세요!"}]
