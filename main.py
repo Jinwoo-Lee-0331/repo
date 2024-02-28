@@ -170,7 +170,7 @@ def main():
                 img=open('img.png','rb')
                 img_crop=open('img_crop.png','rb')
                 response=client.images.edit(
-                    model='dall-e-2'
+                    model='dall-e-2',
                   image=img,
                   mask=img_crop,
                   prompt=prompt,
