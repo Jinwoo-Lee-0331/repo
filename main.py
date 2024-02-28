@@ -1,4 +1,14 @@
 import streamlit as st
+import numpy as np
+import requests
+from PIL import Image
+import matplotlib.pyplot as plt
+import io
+from openai import OpenAI
+import base64
+from PIL import Image
+from streamlit_cropper import st_cropper
+
 import tiktoken
 from loguru import logger
 
@@ -14,17 +24,8 @@ from langchain.embeddings import HuggingFaceEmbeddings
 
 from langchain.memory import ConversationBufferMemory
 from langchain.vectorstores import FAISS
-
-# from streamlit_chat import message
-from langchain.callbacks import get_openai_callback
-from langchain.memory import StreamlitChatMessageHistory
-from openai import OpenAI
-
-
+    
 def main():
-    st.set_page_config(
-        page_title="KGT Chatbot",
-        page_icon="💧")
 
     st.title("💧 _KGT Chatbot_ ")
 
@@ -37,78 +38,151 @@ def main():
     if "processComplete" not in st.session_state:
         st.session_state.processComplete = None
 
+    cont=st.container()
     with st.sidebar:
-        uploaded_files = st.file_uploader("Upload your file", type=['pdf', 'docx'], accept_multiple_files=True)
-        process = st.button("문서 학습")
-        openai_api_key = st.secrets["api_key"]
-        on = st.toggle('문서기반 답변 여부')
-        with st.spinner("Thinking..."):
-            if process:
-                if not openai_api_key:
-                    st.info("Please add your OpenAI API key to continue.")
-                    st.stop()
-                files_text = get_text(uploaded_files)
-                text_chunks = get_text_chunks(files_text)
-                vetorestore = get_vectorstore(text_chunks)
-                st.session_state.conversation = get_conversation_chain(vetorestore, openai_api_key)
-                st.session_state.processComplete = True
-
-
-    # Chat logic
-    if on:
-        if 'messages' not in st.session_state:
-            st.session_state['messages'] = [{"role": "assistant",
-                                             "content": "안녕하세요! 주어진 문서에 대해 궁금하신 것이 있으면 언제든 물어봐주세요!"}]
-
-        for message in st.session_state.messages:
-            with st.chat_message(message["role"]):
-                st.markdown(message["content"])
-
-        history = StreamlitChatMessageHistory(key="chat_messages")
-
-        if query := st.chat_input("질문을 입력해주세요."):
-            st.session_state.messages.append({"role": "user", "content": query})
-
-            with st.chat_message("user"):
-                st.markdown(query)
-
-            with st.chat_message("assistant"):
-                chain = st.session_state.conversation
-
+        openai_api_key = "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"
+        genre = st.radio(
+            "Chat Type",
+            ["***Text Generation***","***Document based***", "***Imaga Generation***", "***Vision***", "***Image Edit***"],
+            index=0,
+        )
+        st.divider()
+        if genre == "***Text Generation***":
+            st.write('')
+        elif genre == "***Document based***":
+            uploaded_files = st.file_uploader("Upload your file", type=['pdf', 'docx'], accept_multiple_files=True)
+            if uploaded_files:
                 with st.spinner("Thinking..."):
-                    result = chain({"question": query})
-                    with get_openai_callback() as cb:
-                        st.session_state.chat_history = result['chat_history']
+                    files_text = get_text(uploaded_files)
+                    text_chunks = get_text_chunks(files_text)
+                    vetorestore = get_vectorstore(text_chunks)
+                    st.session_state.conversation = get_conversation_chain(vetorestore, openai_api_key)
+                    st.session_state.processComplete = True
+        elif genre == "***Imaga Generation***":       
+            st.write('')     
+        elif genre == "***Vision***":  
+            uploaded_image = st.file_uploader("Upload your Image", type=['png', 'jpg', 'jpeg', 'gif'], accept_multiple_files=False)            
+            # st.write(uploaded_image)
+            if uploaded_image:
+                st.image(uploaded_image)
+                base64_image=base64.b64encode(uploaded_image.read()).decode('utf-8')
+                headers = {
+                  "Content-Type": "application/json",
+                  "Authorization": f"Bearer {openai_api_key}"
+                }
+        elif genre == "***Image Edit***": 
+            img_file = st.file_uploader("Upload your Image", type=['png'], accept_multiple_files=False) 
+            if img_file:
+                img = Image.open(img_file)
+                img_crop = Image.open(img_file)
+                with cont:                    
+                    rect = st_cropper(
+                        img_crop,
+                        realtime_update=True,
+                        # box_color=box_color,
+                        # aspect_ratio=aspect_ratio,
+                        return_type='box',
+                        # stroke_width=stroke_width
+                    )    
+                left, top, width, height = tuple(map(int, rect.values()))
+                
+                alpha = Image.new("L", img.size)
+                alpha.paste(255 ,(0,0,alpha.size[0],alpha.size[1]))
+                alpha.paste(0, (left,top,left+width,top+height))
+                img_crop.putalpha(alpha)
+                # st.image(img_crop)
+
+    if "messages" not in st.session_state:
+        st.session_state["messages"] = [{"role": "assistant", "content": "안녕하세요? 궁금한 것이 있으면 물어보세요"}]
+
+    for msg in st.session_state.messages:
+        if msg["content"][0:4]=='http':
+            st.chat_message(msg["role"]).image(msg["content"])
+        else:
+            st.chat_message(msg["role"]).write(msg["content"])
+
+    if prompt := st.chat_input():
+        client = OpenAI(api_key=openai_api_key)
+        if not openai_api_key:
+            st.info("Please add your OpenAI API key to continue.")
+            st.stop()
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        st.chat_message("user").write(prompt)
+        
+        with st.spinner("Thinking..."):
+            if genre == "***Imaga Generation***":
+                response=client.images.generate(
+                    model="dall-e-3",
+                    prompt=prompt,
+                    n=1,
+                    size="1024x1024")
+                st.session_state.messages.append({"role": "assistant", "content": response.data[0].url})
+                st.chat_message("assistant").image(response.data[0].url)
+            elif genre == "***Vision***":
+                payload = {
+                  "model": "gpt-4-vision-preview",
+                  "messages": [
+                    {
+                      "role": "user",
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": prompt
+                        },
+                        {
+                          "type": "image_url",
+                          "image_url": {
+                            "url": f"data:image/jpeg;base64,{base64_image}",
+                            "detail": "high"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "max_tokens": 1500
+                }
+                response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload)
+                st.session_state.messages.append({"role": "assistant", "content": response.json()['choices'][0]['message']['content']})
+                st.chat_message("assistant").write(response.json()['choices'][0]['message']['content'])
+            elif genre == "***Document based***":
+                # response = client.chat.completions.create(model="gpt-4", messages=st.session_state.messages)
+                # msg = response.choices[0].message.content
+                # st.session_state.messages.append({"role": "assistant", "content": msg})
+                # st.chat_message("assistant").write(msg)
+
+                chain = st.session_state.conversation
+                with st.spinner("Thinking..."):
+                    result = chain({"question": prompt})
+                    # with get_openai_callback() as cb:
+                    #     st.session_state.chat_history = result['chat_history']
                     response = result['answer']
                     source_documents = result['source_documents']
 
-                    st.markdown(response)
-                    with st.expander("참고 문서 확인"):
-                        st.markdown(source_documents[0].metadata['source'], help=source_documents[0].page_content)
-                        st.markdown(source_documents[1].metadata['source'], help=source_documents[1].page_content)
-            # Add assistant message to chat history
-            st.session_state.messages.append({"role": "assistant", "content": response})
-    else:
-        if "messages" not in st.session_state:
-            st.session_state["messages"] = [{"role": "assistant", "content": "안녕하세요? 궁금한 것이 있으면 물어보세요"}]
-
-        for msg in st.session_state.messages:
-            st.chat_message(msg["role"]).write(msg["content"])
-
-        if prompt := st.chat_input():
-            if not openai_api_key:
-                st.info("Please add your OpenAI API key to continue.")
-                st.stop()
-
-            client = OpenAI(api_key=openai_api_key)
-            st.session_state.messages.append({"role": "user", "content": prompt})
-            st.chat_message("user").write(prompt)
-            response = client.chat.completions.create(model="gpt-3.5-turbo", messages=st.session_state.messages)
-            msg = response.choices[0].message.content
-            st.session_state.messages.append({"role": "assistant", "content": msg})
-            st.chat_message("assistant").write(msg)
-
-
+                    # st.markdown(response)
+                st.session_state.messages.append({"role": "assistant", "content": response})
+                st.chat_message("assistant").write(response)
+                with st.expander("참고 문서 확인"):
+                    st.markdown(source_documents[0].metadata['source'], help=source_documents[0].page_content)
+                    st.markdown(source_documents[1].metadata['source'], help=source_documents[1].page_content)
+            elif genre == "***Image Edit***":
+                img.save('img.png')
+                img_crop.save('img_crop.png')
+                img=open('img.png','rb')
+                img_crop=open('img_crop.png','rb')
+                response=client.images.edit(
+                  image=img,
+                  mask=img_crop,
+                  prompt=prompt,
+                  n=1,
+                )
+                st.session_state.messages.append({"role": "assistant", "content": response.data[0].url})
+                st.chat_message("assistant").image(response.data[0].url)
+            else:                    
+                response = client.chat.completions.create(model="gpt-4", messages=st.session_state.messages)
+                msg = response.choices[0].message.content
+                st.session_state.messages.append({"role": "assistant", "content": msg})
+                st.chat_message("assistant").write(msg)
+                
 def tiktoken_len(text):
     tokenizer = tiktoken.get_encoding("cl100k_base")
     tokens = tokenizer.encode(text)
@@ -158,7 +232,7 @@ def get_vectorstore(text_chunks):
 
 
 def get_conversation_chain(vetorestore, openai_api_key):
-    llm = ChatOpenAI(openai_api_key=openai_api_key, model_name='gpt-3.5-turbo', temperature=0)
+    llm = ChatOpenAI(openai_api_key=openai_api_key, model_name='gpt-4', temperature=0)
     conversation_chain = ConversationalRetrievalChain.from_llm(
         llm=llm,
         chain_type="stuff",
@@ -170,7 +244,6 @@ def get_conversation_chain(vetorestore, openai_api_key):
     )
 
     return conversation_chain
-
 
 if __name__ == '__main__':
     main()
