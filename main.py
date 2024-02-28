@@ -40,7 +40,7 @@ def main():
 
     cont=st.container()
     with st.sidebar:
-        openai_api_key = "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"
+        openai_api_key = st.secret['api_key']
         genre = st.radio(
             "Chat Type",
             ["***Text Generation***","***Document based***", "***Imaga Generation***", "***Vision***", "***Image Edit***"],
