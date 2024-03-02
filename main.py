@@ -2,7 +2,6 @@ import streamlit as st
 import numpy as np
 import requests
 from PIL import Image
-import matplotlib.pyplot as plt
 import io
 from openai import OpenAI
 import base64
