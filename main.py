@@ -55,11 +55,23 @@ def main():
             st.markdown(" ")
             st.markdown(" ")
             togg=st.toggle("***Record Chat***")
-            st.markdown("", help="회사망 사용 불가")
+            st.caption("", help="회사망 사용 불가")
         st.divider()
-    
+        
+    ###############################################################
+        
         if genre == "***Text Generation***":
-            st.write('')
+            system_prompt = st.text_area(
+            "System Prompt",
+            "당신은 유능한 조수입니다. 당신은 구글에서 정보를 찾을 수 있고 그 정보를 바탕으로 답변을 해줄 수 있습니다. 관련 정보를 찾으면 해당 url과 사진 등을 제시해주면 좋습니다.",
+                height = 50,
+                help = "CHATGPT의 특성 및 대답 형식을 설정"
+            )
+            temp = st.slider("Temperature",0.0,1.0,0.5, help="수치가 작을수록 정형화된 대답, 수치가 커질수록 창의적인 대답이 나옵니다.")
+            st.markdown("""ℹ️
+            [프롬프트 작성 Tip](https://mych21.tistory.com/entry/%EC%B1%97-GPT-%ED%94%84%EB%A1%AC%ED%94%84%ED%8A%B8-%EB%A7%88%EC%8A%A4%ED%84%B0-%ED%95%98%EB%8A%94-%EB%B0%A9%EB%B2%95-%EC%A7%88%EB%AC%B8-%EC%B5%9C%EC%A0%81%ED%99%94-%EC%8B%9C%ED%82%A4%EA%B8%B0)
+            """)
+            
         elif genre == "***Imaga Generation***":       
             st.write('')     
         elif genre == "***Text to Speech***":     
@@ -73,9 +85,12 @@ def main():
                     vetorestore = get_vectorstore(text_chunks)
                     st.session_state.conversation = get_conversation_chain(vetorestore, openai_api_key)
                     st.session_state.processComplete = True
-        elif genre == "***Vision***":  
-            uploaded_image = st.file_uploader("Upload your Image", type=['png', 'jpg', 'jpeg', 'gif'], accept_multiple_files=False)            
-            # st.write(uploaded_image)
+        elif genre == "***Vision***":            
+            vision_radio=st.radio("How to take your image",['Upload','Camera'])
+            if vision_radio=='Camera':
+                uploaded_image = st.camera_input("Take your Image")
+            elif vision_radio=='Upload':
+                uploaded_image = st.file_uploader("Upload your Image", type=['png', 'jpg', 'jpeg', 'gif'], accept_multiple_files=False)  
             if uploaded_image:
                 st.image(uploaded_image)
                 base64_image=base64.b64encode(uploaded_image.read()).decode('utf-8')
@@ -83,8 +98,14 @@ def main():
                   "Content-Type": "application/json",
                   "Authorization": f"Bearer {openai_api_key}"
                 }
-        elif genre == "***Image Edit***": 
-            img_file = st.file_uploader("Upload your Image", type=['png'], accept_multiple_files=False) 
+        elif genre == "***Image Edit***":            
+            ie_radio=st.radio("How to take your image",['Upload','Camera'])
+            if ie_radio=='Camera':
+                img_file = st.camera_input("Take your Image")
+            elif ie_radio=='Upload':
+                img_file = st.file_uploader("Upload your Image", type=['png'], accept_multiple_files=False) 
+            # img_file = st.file_uploader("Upload your Image", type=['png'], accept_multiple_files=False) 
+            # img_file = st.camera_input("Upload your Image")
             if img_file:
                 img = Image.open(img_file)
                 img_crop = Image.open(img_file)
@@ -104,15 +125,28 @@ def main():
                 alpha.paste(0, (left,top,left+width,top+height))
                 img_crop.putalpha(alpha)
                 # st.write(f"{img.size[0]}x{img.size[1]}")
-        elif genre == "***Speech to Text***": 
-            audio_bytes = audio_recorder(
+        elif genre == "***Speech to Text***":          
+            stt_radio=st.radio("How to take your audio",['Upload','Record'])
+            audio_bytes=[]
+            uploaded_audio=[]
+            if stt_radio=='Record':
+                audio_bytes = audio_recorder(
                     text="Click to Record",
                     recording_color="#e8b62c",
                     neutral_color="#6aa36f",
                     # icon_name="user",
                     icon_size="2x",
                 )
-            uploaded_audio = st.file_uploader("Upload your Audio", type=['mp3','wav','mpeg','webm','mp4','m4a'], accept_multiple_files=False)
+            elif stt_radio=='Upload':
+                uploaded_audio = st.file_uploader("Upload your Audio", type=['mp3','wav','mpeg','webm','mp4','m4a'], accept_multiple_files=False)
+            # audio_bytes = audio_recorder(
+            #         text="Click to Record",
+            #         recording_color="#e8b62c",
+            #         neutral_color="#6aa36f",
+            #         # icon_name="user",
+            #         icon_size="2x",
+            #     )
+            # uploaded_audio = st.file_uploader("Upload your Audio", type=['mp3','wav','mpeg','webm','mp4','m4a'], accept_multiple_files=False)
             
     st.chat_message("assistant").write("안녕하세요? 궁금한 것이 있으면 물어보세요")
     
@@ -225,12 +259,7 @@ def main():
                     st.markdown(source_documents[0].metadata['source'], help=source_documents[0].page_content)
                     st.markdown(source_documents[1].metadata['source'], help=source_documents[1].page_content)
                     
-            elif genre == "***Image Edit***":              
-                
-                # img.save('img.png')
-                # img_crop.save('img_crop.png')
-                # img=open(img,'rb')
-                # img_crop=open(img_crop,'rb')
+            elif genre == "***Image Edit***":    
                 byte_img = io.BytesIO()
                 img.save(byte_img, format='png')
                 byte_img_crop = io.BytesIO()
@@ -266,8 +295,9 @@ def main():
                 
             else:
                 response = client.chat.completions.create(model="gpt-4", messages=[
-                    {"role": "system", "content": "You are a helpful assistant."},
-                    {"role": "user", "content": prompt}])
+                    {"role": "system", "content":system_prompt},
+                    {"role": "user", "content": prompt}],
+                    temperature = temp)
                 msg = response.choices[0].message.content
                 st.session_state.messages.append({"role": "assistant", "content": msg})
                 st.chat_message("assistant").write(msg)
