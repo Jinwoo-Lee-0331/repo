@@ -15,6 +15,37 @@ from io import BytesIO
 from io import StringIO
     
 def main():
+    st.set_page_config(
+        page_title="CHATKGT",  # String or None. Strings get appended with "• Streamlit".
+        # layout="wide",
+        # page_icon="💧",  # Can be "centered" or "wide". In the future also "dashboard", etc.
+        # initial_sidebar_state="auto",  # Can be "auto", "expanded", "collapsed"
+        page_icon="./ci.png",  # String, anything supported by st.image, or None.
+    )
+    st.markdown(
+        """
+        <style>
+            .block-container {
+                    padding-top: 0rem;
+                }
+            .sidebar .sidebar-content {
+            background-image: linear-gradient(#2e7bcf,#2e7bcf);
+            color: white;
+            }              
+            .css-1aumxhk {
+            background-color: #011839;
+            background-image: none;
+            color: #ffffff
+            }
+            section[data-testid="stSidebar"] {
+                width: 420px !important; # Set the width to your desired value
+                background-color: white;
+            }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.divider()
     st.title("💧 _KGT Chatbot_ ")
     if "thread" not in st.session_state:
         st.session_state.thread = None
