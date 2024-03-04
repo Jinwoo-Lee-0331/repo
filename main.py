@@ -45,12 +45,13 @@ def main():
             togg=st.toggle("***Record Chat***", help="⚠️ 회사 네트워크에서 보안 제한 - 외부 네트워크에서 사용해주세요")
         st.divider()
         
-        if key_tab.loc[key_tab['key_index'] == select_key,'password'].reset_index(drop=True)[0].astype('str') == pw.astype('str'):
+        if key_tab.loc[key_tab['key_index'] == select_key,'password'].reset_index(drop=True)[0].astype('str') == pw:
             openai_api_key = st.secrets[select_key]
         else:
             openai_api_key = None
             st.error("key index or password is wrong")
         st.write(key_tab.loc[key_tab['key_index'] == select_key,'password'].reset_index(drop=True)[0].astype('str'))
+        st.write(dtype(pw))
         if openai_api_key is not None:
             client = OpenAI(api_key=openai_api_key)
             empty_thread = client.beta.threads.create()
