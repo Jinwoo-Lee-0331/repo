@@ -50,7 +50,6 @@ def main():
         else:
             openai_api_key = None
             st.error("key index or password is wrong")
-        st.write(pw)
 
         if openai_api_key is not None:
             client = OpenAI(api_key=openai_api_key)
