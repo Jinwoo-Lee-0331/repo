@@ -9,9 +9,6 @@ from PIL import Image
 from streamlit_cropper import st_cropper
 import pandas as pd
 
-import tiktoken
-from loguru import logger
-
 from audio_recorder_streamlit import audio_recorder
 from pydub import AudioSegment
 from io import BytesIO
@@ -19,14 +16,20 @@ from io import StringIO
     
 def main():
     st.title("💧 _KGT Chatbot_ ")
-    if "conversation" not in st.session_state:
-        st.session_state.conversation = None
+    if "thread" not in st.session_state:
+        st.session_state.thread = None
+        
+    if "asst_list" not in st.session_state:
+        st.session_state.asst_list = None
 
-    if "chat_history" not in st.session_state:
-        st.session_state.chat_history = None
+    if "asst" not in st.session_state:
+        st.session_state.asst = None
 
-    if "processComplete" not in st.session_state:
-        st.session_state.processComplete = None
+    if "client" not in st.session_state:
+        st.session_state.client = None
+        
+    if "key_tab" not in st.session_state:
+        st.session_state.key_tab = None
 
     cont=st.container()
     with st.sidebar:                        
@@ -39,24 +42,25 @@ def main():
                 index=0,
             )                
         with tg:
-            key_tab=pd.read_csv('./data/api_key_table.csv')  
-            select_key = st.selectbox("Key Index",key_tab.key_index.to_list())
+            st.session_state.key_tab=pd.read_csv('./api_key_table.csv')  
+            select_key = st.selectbox("Key Index",st.session_state.key_tab.key_index.to_list())
             pw = st.text_input("password",'',type='password')
-            togg=st.toggle("***Record Chat***", help="⚠️ 회사 네트워크에서 보안 제한 - 외부 네트워크에서 사용해주세요")
+            # togg=st.toggle("***Record Chat***", help="⚠️ 회사 네트워크에서 보안 제한 - 외부 네트워크에서 사용해주세요")
         st.divider()
-        if key_tab.loc[key_tab['key_index'] == select_key,'password'].reset_index(drop=True)[0].astype('str') == pw:
+        
+        if st.session_state.key_tab.loc[st.session_state.key_tab['key_index'] == select_key,'password'].reset_index(drop=True)[0].astype('str') == pw:
             openai_api_key = st.secrets[select_key]
         else:
             openai_api_key = None
             st.error("key index or password is wrong")
-        
+
         if openai_api_key is not None:
-            client = OpenAI(api_key=openai_api_key)
-            empty_thread = client.beta.threads.create()
-            my_assistants = client.beta.assistants.list()
-            asst_list={}
+            st.session_state.client = OpenAI(api_key=openai_api_key)
+            st.session_state.thread = st.session_state.client.beta.threads.create()
+            my_assistants = st.session_state.client.beta.assistants.list()
+            st.session_state.asst_list={}
             for i in range(len(my_assistants.data)):
-                asst_list[my_assistants.data[i].name]=my_assistants.data[i].id
+                st.session_state.asst_list[my_assistants.data[i].name]=my_assistants.data[i].id
         
     ###############################################################
         
@@ -86,7 +90,7 @@ def main():
             st.divider()
             dbc1, dbc2 = st.columns([1,1])
             with dbc2:
-                asst_id = st.text_input('Your Assistant ID', '')
+                asst_name = st.text_input('Your Assistant ID', '')
                 db_button = st.button('Create Assistant!',use_container_width=True, help="2134")
             with dbc1:
                 uploaded_files = st.file_uploader("Upload your file", type=['pdf', 'docx'], accept_multiple_files=True)
@@ -95,30 +99,25 @@ def main():
                 if uploaded_files:
                     file_id=[]
                     for doc in uploaded_files:
-                        openai_file = client.files.create(
+                        openai_file = st.session_state.client.files.create(
                             file=doc,
                             purpose="assistants"
                         )
                         file_id.append(openai_file.id)
-                    
-                    # my_assistants = client.beta.assistants.list()
-                    # asst_list={}
-                    # for i in range(len(my_assistants.data)):
-                    #     asst_list[my_assistants.data[i].name]=my_assistants.data[i].id
                         
-                    if asst_id in asst_list:
-                        my_updated_assistant = client.beta.assistants.update(
-                          asst_list[asst_id],
+                    if asst_name in st.session_state.asst_list:
+                        st.session_state.asst = st.session_state.client.beta.assistants.update(
+                          st.session_state.asst_list[asst_name],
                           instructions=system_prompt,
-                          name=asst_id,
+                          name=asst_name,
                           tools=[{"type": "retrieval"}],
                           model="gpt-4-turbo-preview",
                           file_ids=file_id,
                         )
                     else:
-                        my_assistant = client.beta.assistants.create(
+                        st.session_state.asst = st.session_state.client.beta.assistants.create(
                             instructions=system_prompt,
-                            name=asst_id,
+                            name=asst_name,
                             tools=[{"type": "retrieval"}],
                             model="gpt-4-turbo-preview",
                           file_ids=file_id,
@@ -186,9 +185,7 @@ def main():
         if audio_bytes:
             st.chat_message("user").audio(audio_bytes)
             audio_bytes = AudioSegment(data=audio_bytes).export('./test.wav',format='wav')
-    
-            client = OpenAI(api_key=openai_api_key)
-            transcript = client.audio.transcriptions.create(
+            transcript = st.session_state.client.audio.transcriptions.create(
               model="whisper-1",
               file=audio_bytes,
                 language='ko',
@@ -200,9 +197,7 @@ def main():
         
         if uploaded_audio:
             st.chat_message("user").audio(uploaded_audio, format="audio/wav")
-    
-            client = OpenAI(api_key=openai_api_key)
-            transcript = client.audio.transcriptions.create(
+            transcript = st.session_state.client.audio.transcriptions.create(
               model="whisper-1",
               file=uploaded_audio
             )
@@ -213,15 +208,15 @@ def main():
     ############# session_state ###############
     if "messages" not in st.session_state:
         st.session_state["messages"] = [{"role": "assistant", "content": "안녕하세요? 궁금한 것이 있으면 물어보세요"}]
-    if togg:
-        if "messages" in st.session_state:
-            for messages in st.session_state.messages:
-                if len(messages["content"]) > 5000:
-                    st.chat_message(messages["role"]).audio(messages["content"])
-                elif messages["content"][0:4]=='http':
-                    st.chat_message(messages["role"]).image(messages["content"])
-                else:
-                    st.chat_message(messages["role"]).write(messages["content"])
+    # if togg:
+    if "messages" in st.session_state:
+        for messages in st.session_state.messages:
+            if messages["content"][0]==255:
+                st.chat_message(messages["role"]).audio(messages["content"])
+            elif messages["content"][0:4]=='http':
+                st.chat_message(messages["role"]).image(messages["content"])
+            else:
+                st.chat_message(messages["role"]).write(messages["content"])
 
     ############# chat ###############
     
@@ -234,7 +229,7 @@ def main():
         
         with st.spinner("Thinking..."):
             if genre == "***Imaga Generation***":
-                response=client.images.generate(
+                response=st.session_state.client.images.generate(
                     model="dall-e-3",
                     prompt=prompt,
                     n=1,
@@ -270,22 +265,21 @@ def main():
                 st.chat_message("assistant").write(response.json()['choices'][0]['message']['content'])
                 
             elif genre == "***Document based***":
-                # if empty_thread:
-                thread_message = client.beta.threads.messages.create(
-                  empty_thread.id,
+                thread_message = st.session_state.client.beta.threads.messages.create(
+                  st.session_state.thread.id,
                   role="user",
                   content=prompt,
                 )
 
-                run = client.beta.threads.runs.create(
-                    thread_id=empty_thread.id,
-                    assistant_id=asst_list[asst_id]
+                run = st.session_state.client.beta.threads.runs.create(
+                    thread_id=st.session_state.thread.id,
+                    assistant_id=st.session_state.asst.id
                 )                
                 import time
                 
                 while True:
-                    run = client.beta.threads.runs.retrieve(
-                        thread_id=empty_thread.id,
+                    run = st.session_state.client.beta.threads.runs.retrieve(
+                        thread_id=st.session_state.thread.id,
                         run_id=run.id
                     )
                     if run.status == "completed":
@@ -293,7 +287,7 @@ def main():
                     else:
                         time.sleep(1)
 
-                thread_messages = client.beta.threads.messages.list(empty_thread.id)
+                thread_messages = st.session_state.client.beta.threads.messages.list(st.session_state.thread.id)
                 st.session_state.messages.append({"role": "assistant", "content": thread_messages.data[0].content[0].text.value})
                 st.chat_message("assistant").write(thread_messages.data[0].content[0].text.value)
                     
@@ -302,7 +296,7 @@ def main():
                 img.save(byte_img, format='png')
                 byte_img_crop = io.BytesIO()
                 img_crop.save(byte_img_crop, format='png')
-                response=client.images.edit(
+                response=st.session_state.client.images.edit(
                   image=byte_img,
                   mask=byte_img_crop,
                   prompt=prompt,
@@ -313,7 +307,7 @@ def main():
                 st.chat_message("assistant").image(response.data[0].url)
                 
             elif genre == "***Text to Speech***":
-                response = client.audio.speech.create(
+                response = st.session_state.client.audio.speech.create(
                     model="tts-1-hd",
                     voice=voice,
                     input=prompt,
@@ -323,7 +317,7 @@ def main():
                 st.chat_message("assistant").audio(msg)
 
             elif genre == "***Speech to Text***":
-                transcript = client.audio.transcriptions.create(
+                transcript = st.session_state.client.audio.transcriptions.create(
                   model="whisper-1",
                   file=audio_bytes.read()
                 )
@@ -332,7 +326,7 @@ def main():
                 st.chat_message("assistant").write(msg)
                 
             else:
-                response = client.chat.completions.create(model="gpt-4", messages=[
+                response = st.session_state.client.chat.completions.create(model="gpt-4", messages=[
                     {"role": "system", "content":system_prompt},
                     {"role": "user", "content": prompt}],
                     temperature = temp)
