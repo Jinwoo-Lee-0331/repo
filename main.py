@@ -7,26 +7,15 @@ from openai import OpenAI
 import base64
 from PIL import Image
 from streamlit_cropper import st_cropper
+import pandas as pd
 
 import tiktoken
 from loguru import logger
 
-from langchain.chains import ConversationalRetrievalChain
-from langchain.chat_models import ChatOpenAI
-
-from langchain.document_loaders import PyPDFLoader
-from langchain.document_loaders import Docx2txtLoader
-from langchain.document_loaders import UnstructuredPowerPointLoader
-
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.embeddings import HuggingFaceEmbeddings
-
-from langchain.memory import ConversationBufferMemory
-from langchain.vectorstores import FAISS
-
 from audio_recorder_streamlit import audio_recorder
 from pydub import AudioSegment
 from io import BytesIO
+from io import StringIO
     
 def main():
     st.title("💧 _KGT Chatbot_ ")
@@ -40,51 +29,104 @@ def main():
         st.session_state.processComplete = None
 
     cont=st.container()
-    with st.sidebar:
-        openai_api_key = st.secrets["api_key"]
+    with st.sidebar:                        
         gr, tg = st.columns([3,2])
         with gr:
             genre = st.radio(
                 "Chat Type",
                 ["***Text Generation***","***Document based***", "***Vision***", "***Imaga Generation***", "***Image Edit***", "***Text to Speech***", "***Speech to Text***"],
-                captions=['일반적인 TEXT 답변','문서 기반 답변', '이미지 기반 답변', '이미지 생성(DALL-E-3)', '이미지 편집(DALL-E-2)', '음성 생성', '음성 인식'],    
+                captions=['일반적인 TEXT 답변','문서 기반 답변', '이미지 기반 답변', '이미지 생성(DALL-E-3)', '이미지 편집(DALL-E-2)', '음성 생성', '음성 인식'],
                 index=0,
-            )            
-                
+            )                
         with tg:
-            st.markdown(" ")
-            st.markdown(" ")
-            togg=st.toggle("***Record Chat***")
-            st.caption("", help="회사망 사용 불가")
+            key_tab=pd.read_csv('./api_key_table.csv')  
+            select_key = st.selectbox("Key Index",key_tab.key_index.to_list())
+            pw = st.text_input("password",'',type='password')
+            togg=st.toggle("***Record Chat***", help="⚠️ 회사 네트워크에서 보안 제한 - 외부 네트워크에서 사용해주세요")
         st.divider()
+        
+        if key_tab.loc[key_tab['key_index'] == select_key,'password'].reset_index(drop=True)[0].astype('str') == pw:
+            openai_api_key = st.secrets[select_key]
+        else:
+            openai_api_key = None
+            st.error("key index or password is wrong")
+        st.write(pw)
+
+        if openai_api_key is not None:
+            client = OpenAI(api_key=openai_api_key)
+            empty_thread = client.beta.threads.create()
+            my_assistants = client.beta.assistants.list()
+            asst_list={}
+            for i in range(len(my_assistants.data)):
+                asst_list[my_assistants.data[i].name]=my_assistants.data[i].id
         
     ###############################################################
         
         if genre == "***Text Generation***":
             system_prompt = st.text_area(
             "System Prompt",
-            "당신은 유능한 조수입니다. 당신은 구글에서 정보를 찾을 수 있고 그 정보를 바탕으로 답변을 해줄 수 있습니다. 관련 정보를 찾으면 해당 url과 사진 등을 제시해주면 좋습니다.",
+            "당신은 유능한 조수입니다. 당신은 구글에서 정보를 찾을 수 있고 그 정보를 바탕으로 답변을 해줄 수 있습니다. 관련 정보를 찾으면 해당 url과 사진 등을 제시해주세요.",
                 height = 50,
                 help = "CHATGPT의 특성 및 대답 형식을 설정"
             )
             temp = st.slider("Temperature",0.0,1.0,0.5, help="수치가 작을수록 정형화된 대답, 수치가 커질수록 창의적인 대답이 나옵니다.")
             st.markdown("""ℹ️
-            [프롬프트 작성 Tip](https://mych21.tistory.com/entry/%EC%B1%97-GPT-%ED%94%84%EB%A1%AC%ED%94%84%ED%8A%B8-%EB%A7%88%EC%8A%A4%ED%84%B0-%ED%95%98%EB%8A%94-%EB%B0%A9%EB%B2%95-%EC%A7%88%EB%AC%B8-%EC%B5%9C%EC%A0%81%ED%99%94-%EC%8B%9C%ED%82%A4%EA%B8%B0)
-            """)
-            
+            [프롬프트 작성 Tip](https://platform.openai.com/docs/guides/prompt-engineering)
+            """)            
         elif genre == "***Imaga Generation***":       
-            st.write('')     
+            st.caption("⚠️ 회사 네트워크에서 보안 제한 - 외부 네트워크에서 사용해주세요")     
         elif genre == "***Text to Speech***":     
             voice = st.radio("Voice",['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer'],index=0)
         elif genre == "***Document based***":
-            uploaded_files = st.file_uploader("Upload your file", type=['pdf', 'docx'], accept_multiple_files=True)
-            if uploaded_files:
-                with st.spinner("Thinking..."):
-                    files_text = get_text(uploaded_files)
-                    text_chunks = get_text_chunks(files_text)
-                    vetorestore = get_vectorstore(text_chunks)
-                    st.session_state.conversation = get_conversation_chain(vetorestore, openai_api_key)
-                    st.session_state.processComplete = True
+            system_prompt = st.text_area(
+            "System Prompt",
+            "당신은 유능한 조수입니다. 당신은 질문에 답변하기 위해 파일에 액세스 할 수 있습니다. 항상 파일들의 정보를 기반으로 응답하세요. 관련 정보를 찾으면 해당 정보(해당 내용의 페이지 위치나 문단)와 사진 등을 제시하면 좋습니다.",
+                height = 50,
+                help = "CHATGPT의 특성 및 대답 형식을 설정"
+            )
+            temp = st.slider("Temperature",0.0,1.0,0.5, help="수치가 작을수록 정형화된 대답, 수치가 커질수록 창의적인 대답이 나옵니다.")
+            st.divider()
+            dbc1, dbc2 = st.columns([1,1])
+            with dbc2:
+                asst_id = st.text_input('Your Assistant ID', '')
+                db_button = st.button('Create Assistant!',use_container_width=True, help="2134")
+            with dbc1:
+                uploaded_files = st.file_uploader("Upload your file", type=['pdf', 'docx'], accept_multiple_files=True)
+            
+            if db_button:
+                if uploaded_files:
+                    file_id=[]
+                    for doc in uploaded_files:
+                        openai_file = client.files.create(
+                            file=doc,
+                            purpose="assistants"
+                        )
+                        file_id.append(openai_file.id)
+                    
+                    # my_assistants = client.beta.assistants.list()
+                    # asst_list={}
+                    # for i in range(len(my_assistants.data)):
+                    #     asst_list[my_assistants.data[i].name]=my_assistants.data[i].id
+                        
+                    if asst_id in asst_list:
+                        my_updated_assistant = client.beta.assistants.update(
+                          asst_list[asst_id],
+                          instructions=system_prompt,
+                          name=asst_id,
+                          tools=[{"type": "retrieval"}],
+                          model="gpt-4-turbo-preview",
+                          file_ids=file_id,
+                        )
+                    else:
+                        my_assistant = client.beta.assistants.create(
+                            instructions=system_prompt,
+                            name=asst_id,
+                            tools=[{"type": "retrieval"}],
+                            model="gpt-4-turbo-preview",
+                          file_ids=file_id,
+                        )                    
+                else:
+                    st.warning("파일을 업로드하고 어시스턴트 id를 입력해주세요")
         elif genre == "***Vision***":            
             vision_radio=st.radio("How to take your image",['Upload','Camera'])
             if vision_radio=='Camera':
@@ -139,23 +181,15 @@ def main():
                 )
             elif stt_radio=='Upload':
                 uploaded_audio = st.file_uploader("Upload your Audio", type=['mp3','wav','mpeg','webm','mp4','m4a'], accept_multiple_files=False)
-            # audio_bytes = audio_recorder(
-            #         text="Click to Record",
-            #         recording_color="#e8b62c",
-            #         neutral_color="#6aa36f",
-            #         # icon_name="user",
-            #         icon_size="2x",
-            #     )
-            # uploaded_audio = st.file_uploader("Upload your Audio", type=['mp3','wav','mpeg','webm','mp4','m4a'], accept_multiple_files=False)
             
     st.chat_message("assistant").write("안녕하세요? 궁금한 것이 있으면 물어보세요")
     
-    if genre == "***Speech to Text***": 
+    if genre == "***Speech to Text***":
         if audio_bytes:
             st.chat_message("user").audio(audio_bytes)
             audio_bytes = AudioSegment(data=audio_bytes).export('./test.wav',format='wav')
     
-            client = OpenAI(api_key=openai_api_key)                
+            client = OpenAI(api_key=openai_api_key)
             transcript = client.audio.transcriptions.create(
               model="whisper-1",
               file=audio_bytes,
@@ -164,19 +198,19 @@ def main():
             )
             msg = transcript.text
             st.session_state.messages.append({"role": "assistant", "content": msg})
-            st.chat_message("assistant").write(msg)        
+            st.chat_message("assistant").write(msg)
         
         if uploaded_audio:
-            st.chat_message("user").audio(uploaded_audio, format="audio/wav") 
+            st.chat_message("user").audio(uploaded_audio, format="audio/wav")
     
-            client = OpenAI(api_key=openai_api_key)                
+            client = OpenAI(api_key=openai_api_key)
             transcript = client.audio.transcriptions.create(
               model="whisper-1",
               file=uploaded_audio
             )
             msg = transcript.text
             st.session_state.messages.append({"role": "assistant", "content": msg})
-            st.chat_message("assistant").write(msg)      
+            st.chat_message("assistant").write(msg)
 
     ############# session_state ###############
     if "messages" not in st.session_state:
@@ -185,7 +219,7 @@ def main():
         if "messages" in st.session_state:
             for messages in st.session_state.messages:
                 if len(messages["content"]) > 5000:
-                    st.chat_message(messages["role"]).audio(messages["content"])   
+                    st.chat_message(messages["role"]).audio(messages["content"])
                 elif messages["content"][0:4]=='http':
                     st.chat_message(messages["role"]).image(messages["content"])
                 else:
@@ -194,7 +228,6 @@ def main():
     ############# chat ###############
     
     if prompt := st.chat_input():
-        client = OpenAI(api_key=openai_api_key)
         if not openai_api_key:
             st.info("Please add your OpenAI API key to continue.")
             st.stop()
@@ -239,25 +272,32 @@ def main():
                 st.chat_message("assistant").write(response.json()['choices'][0]['message']['content'])
                 
             elif genre == "***Document based***":
-                # response = client.chat.completions.create(model="gpt-4", messages=st.session_state.messages)
-                # msg = response.choices[0].message.content
-                # st.session_state.messages.append({"role": "assistant", "content": msg})
-                # st.chat_message("assistant").write(msg)
+                # if empty_thread:
+                thread_message = client.beta.threads.messages.create(
+                  empty_thread.id,
+                  role="user",
+                  content=prompt,
+                )
 
-                chain = st.session_state.conversation
-                with st.spinner("Thinking..."):
-                    result = chain({"question": prompt})
-                    # with get_openai_callback() as cb:
-                    #     st.session_state.chat_history = result['chat_history']
-                    response = result['answer']
-                    source_documents = result['source_documents']
+                run = client.beta.threads.runs.create(
+                    thread_id=empty_thread.id,
+                    assistant_id=asst_list[asst_id]
+                )                
+                import time
+                
+                while True:
+                    run = client.beta.threads.runs.retrieve(
+                        thread_id=empty_thread.id,
+                        run_id=run.id
+                    )
+                    if run.status == "completed":
+                        break
+                    else:
+                        time.sleep(1)
 
-                    # st.markdown(response)
-                st.session_state.messages.append({"role": "assistant", "content": response})
-                st.chat_message("assistant").write(response)
-                with st.expander("참고 문서 확인"):
-                    st.markdown(source_documents[0].metadata['source'], help=source_documents[0].page_content)
-                    st.markdown(source_documents[1].metadata['source'], help=source_documents[1].page_content)
+                thread_messages = client.beta.threads.messages.list(empty_thread.id)
+                st.session_state.messages.append({"role": "assistant", "content": thread_messages.data[0].content[0].text.value})
+                st.chat_message("assistant").write(thread_messages.data[0].content[0].text.value)
                     
             elif genre == "***Image Edit***":    
                 byte_img = io.BytesIO()
@@ -301,71 +341,6 @@ def main():
                 msg = response.choices[0].message.content
                 st.session_state.messages.append({"role": "assistant", "content": msg})
                 st.chat_message("assistant").write(msg)
-                
-
-############# document based def ###############
-
-def tiktoken_len(text):
-    tokenizer = tiktoken.get_encoding("cl100k_base")
-    tokens = tokenizer.encode(text)
-    return len(tokens)
-
-
-def get_text(docs):
-    doc_list = []
-
-    for doc in docs:
-        file_name = doc.name  # doc 객체의 이름을 파일 이름으로 사용
-        with open(file_name, "wb") as file:  # 파일을 doc.name으로 저장
-            file.write(doc.getvalue())
-            logger.info(f"Uploaded {file_name}")
-        if '.pdf' in doc.name:
-            loader = PyPDFLoader(file_name)
-            documents = loader.load_and_split()
-        elif '.docx' in doc.name:
-            loader = Docx2txtLoader(file_name)
-            documents = loader.load_and_split()
-        elif '.pptx' in doc.name:
-            loader = UnstructuredPowerPointLoader(file_name)
-            documents = loader.load_and_split()
-
-        doc_list.extend(documents)
-    return doc_list
-
-
-def get_text_chunks(text):
-    text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=900,
-        chunk_overlap=100,
-        length_function=tiktoken_len
-    )
-    chunks = text_splitter.split_documents(text)
-    return chunks
-
-
-def get_vectorstore(text_chunks):
-    embeddings = HuggingFaceEmbeddings(
-        model_name="jhgan/ko-sroberta-multitask",
-        model_kwargs={'device': 'cpu'},
-        encode_kwargs={'normalize_embeddings': True}
-    )
-    vectordb = FAISS.from_documents(text_chunks, embeddings)
-    return vectordb
-
-
-def get_conversation_chain(vetorestore, openai_api_key):
-    llm = ChatOpenAI(openai_api_key=openai_api_key, model_name='gpt-4', temperature=0)
-    conversation_chain = ConversationalRetrievalChain.from_llm(
-        llm=llm,
-        chain_type="stuff",
-        retriever=vetorestore.as_retriever(search_type='mmr', vervose=True),
-        memory=ConversationBufferMemory(memory_key='chat_history', return_messages=True, output_key='answer'),
-        get_chat_history=lambda h: h,
-        return_source_documents=True,
-        verbose=True
-    )
-
-    return conversation_chain
 
 if __name__ == '__main__':
     main()
