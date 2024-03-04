@@ -39,7 +39,7 @@ def main():
                 index=0,
             )                
         with tg:
-            key_tab=pd.read_csv('./api_key_table.csv')  
+            key_tab=pd.read_csv('./data/api_key_table.csv')  
             select_key = st.selectbox("Key Index",key_tab.key_index.to_list())
             pw = st.text_input("password",'',type='password')
             togg=st.toggle("***Record Chat***", help="⚠️ 회사 네트워크에서 보안 제한 - 외부 네트워크에서 사용해주세요")
