@@ -20,7 +20,7 @@ def main():
         # layout="wide",
         # page_icon="💧",  # Can be "centered" or "wide". In the future also "dashboard", etc.
         # initial_sidebar_state="auto",  # Can be "auto", "expanded", "collapsed"
-        page_icon="./ci.png",  # String, anything supported by st.image, or None.
+        page_icon="./data/ci.png",  # String, anything supported by st.image, or None.
     )
     st.markdown(
         """
