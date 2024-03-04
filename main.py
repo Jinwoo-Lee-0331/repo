@@ -296,31 +296,34 @@ def main():
                 st.chat_message("assistant").write(response.json()['choices'][0]['message']['content'])
                 
             elif genre == "***Document based***":
-                thread_message = st.session_state.client.beta.threads.messages.create(
-                  st.session_state.thread.id,
-                  role="user",
-                  content=prompt,
-                )
-
-                run = st.session_state.client.beta.threads.runs.create(
-                    thread_id=st.session_state.thread.id,
-                    assistant_id=st.session_state.asst.id
-                )                
-                import time
-                
-                while True:
-                    run = st.session_state.client.beta.threads.runs.retrieve(
-                        thread_id=st.session_state.thread.id,
-                        run_id=run.id
+                if st.session_state.asst is not None:
+                    thread_message = st.session_state.client.beta.threads.messages.create(
+                      st.session_state.thread.id,
+                      role="user",
+                      content=prompt,
                     )
-                    if run.status == "completed":
-                        break
-                    else:
-                        time.sleep(1)
-
-                thread_messages = st.session_state.client.beta.threads.messages.list(st.session_state.thread.id)
-                st.session_state.messages.append({"role": "assistant", "content": thread_messages.data[0].content[0].text.value})
-                st.chat_message("assistant").write(thread_messages.data[0].content[0].text.value)
+    
+                    run = st.session_state.client.beta.threads.runs.create(
+                        thread_id=st.session_state.thread.id,
+                        assistant_id=st.session_state.asst.id
+                    )                
+                    import time
+                    
+                    while True:
+                        run = st.session_state.client.beta.threads.runs.retrieve(
+                            thread_id=st.session_state.thread.id,
+                            run_id=run.id
+                        )
+                        if run.status == "completed":
+                            break
+                        else:
+                            time.sleep(1)
+    
+                    thread_messages = st.session_state.client.beta.threads.messages.list(st.session_state.thread.id)
+                    st.session_state.messages.append({"role": "assistant", "content": thread_messages.data[0].content[0].text.value})
+                    st.chat_message("assistant").write(thread_messages.data[0].content[0].text.value)
+                else:
+                    st.warning("파일을 업로드 및 Assistant ID를 입력하고 'Creat Assistant' 버튼을 누르세요")
                     
             elif genre == "***Image Edit***":    
                 byte_img = io.BytesIO()
