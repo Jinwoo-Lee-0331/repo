@@ -179,7 +179,7 @@ def main():
             elif stt_radio=='Upload':
                 uploaded_audio = st.file_uploader("Upload your Audio", type=['mp3','wav','mpeg','webm','mp4','m4a'], accept_multiple_files=False)
             
-    st.chat_message("assistant").write("안녕하세요? 궁금한 것이 있으면 물어보세요")
+    # st.chat_message("assistant").write("안녕하세요? 궁금한 것이 있으면 물어보세요")
     
     if genre == "***Speech to Text***":
         if audio_bytes:
