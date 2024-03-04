@@ -45,7 +45,7 @@ def main():
             togg=st.toggle("***Record Chat***", help="⚠️ 회사 네트워크에서 보안 제한 - 외부 네트워크에서 사용해주세요")
         st.divider()
         
-        if key_tab.loc[key_tab['key_index'] == select_key,'password'].reset_index(drop=True)[0].astype('str') == pw:
+        if key_tab.loc[key_tab['key_index'] == select_key,'password'].reset_index(drop=True)[0].astype('str') == pw.astype('str'):
             openai_api_key = st.secrets[select_key]
         else:
             openai_api_key = None
