@@ -49,7 +49,7 @@ def main():
         else:
             openai_api_key = None
             st.error("key index or password is wrong")
-        st.write(key_tab.loc[key_tab['key_index'] == select_key,'password'].reset_index(drop=True)[0].astype('str'))
+        
         if openai_api_key is not None:
             client = OpenAI(api_key=openai_api_key)
             empty_thread = client.beta.threads.create()
