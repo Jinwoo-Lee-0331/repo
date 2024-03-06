@@ -87,7 +87,8 @@ def main():
 
         if openai_api_key is not None:
             st.session_state.client = OpenAI(api_key=openai_api_key)
-            # st.session_state.thread = st.session_state.client.beta.threads.create()
+            thrd= st.session_state.key_tab.loc[st.session_state.key_tab['key_index'] == select_key,'thread'].reset_index(drop=True)[0]
+            st.session_state.thread = st.session_state.client.beta.threads.retrieve(thrd)
             my_assistants = st.session_state.client.beta.assistants.list()
             st.session_state.asst_list={}
             for i in range(len(my_assistants.data)):
@@ -105,7 +106,16 @@ def main():
             temp = st.slider("Temperature",0.0,1.0,0.5, help="수치가 작을수록 정형화된 대답, 수치가 커질수록 창의적인 대답이 나옵니다.")
             st.markdown("""ℹ️
             [프롬프트 작성 Tip](https://platform.openai.com/docs/guides/prompt-engineering)
-            """)            
+            """)
+            st.session_state.asst = st.session_state.client.beta.assistants.update(
+                          'asst_tT5FZJESlwnysflUHlBwNC0x',
+                          instructions=system_prompt,
+                          name='kgt',
+                          # tools=[{"type": "retrieval"}],
+                          model="gpt-4",
+                          # file_ids=file_id,
+                        )
+            
         elif genre == "***Imaga Generation***":       
             st.caption("⚠️ 회사 네트워크에서 보안 제한 - 외부 네트워크에서 사용해주세요")     
         elif genre == "***Text to Speech***":     
@@ -360,13 +370,39 @@ def main():
                 st.chat_message("assistant").write(msg)
                 
             else:
-                response = st.session_state.client.chat.completions.create(model="gpt-4", messages=[
-                    {"role": "system", "content":system_prompt},
-                    {"role": "user", "content": prompt}],
-                    temperature = temp)
-                msg = response.choices[0].message.content
-                st.session_state.messages.append({"role": "assistant", "content": msg})
-                st.chat_message("assistant").write(msg)
+                thread_message = st.session_state.client.beta.threads.messages.create(
+                      st.session_state.thread.id,
+                      role="user",
+                      content=prompt,
+                )
+
+                run = st.session_state.client.beta.threads.runs.create(
+                    thread_id=st.session_state.thread.id,
+                    assistant_id=st.session_state.asst.id
+                )                
+                import time
+                
+                while True:
+                    run = st.session_state.client.beta.threads.runs.retrieve(
+                        thread_id=st.session_state.thread.id,
+                        run_id=run.id
+                    )
+                    if run.status == "completed":
+                        break
+                    else:
+                        time.sleep(1)
+
+                thread_messages = st.session_state.client.beta.threads.messages.list(st.session_state.thread.id)
+                st.session_state.messages.append({"role": "assistant", "content": thread_messages.data[0].content[0].text.value})
+                st.chat_message("assistant").write(thread_messages.data[0].content[0].text.value)
+                
+                # response = st.session_state.client.chat.completions.create(model="gpt-4", messages=[
+                #     {"role": "system", "content":system_prompt},
+                #     {"role": "user", "content": prompt}],
+                #     temperature = temp)
+                # msg = response.choices[0].message.content
+                # st.session_state.messages.append({"role": "assistant", "content": msg})
+                # st.chat_message("assistant").write(msg)
 
 if __name__ == '__main__':
     main()
