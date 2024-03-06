@@ -87,7 +87,7 @@ def main():
 
         if openai_api_key is not None:
             st.session_state.client = OpenAI(api_key=openai_api_key)
-            st.session_state.thread = st.session_state.client.beta.threads.create()
+            # st.session_state.thread = st.session_state.client.beta.threads.create()
             my_assistants = st.session_state.client.beta.assistants.list()
             st.session_state.asst_list={}
             for i in range(len(my_assistants.data)):
