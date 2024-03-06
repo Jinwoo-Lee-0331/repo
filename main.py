@@ -89,7 +89,8 @@ def main():
             st.session_state.client = OpenAI(api_key=openai_api_key)
             thrd= st.session_state.key_tab.loc[st.session_state.key_tab['key_index'] == select_key,'thread'].reset_index(drop=True)[0]
             st.write(thrd)
-            st.session_state.thread = st.session_state.client.beta.threads.retrieve(thread_id=thrd)
+            # st.session_state.thread = st.session_state.client.beta.threads.retrieve(thread_id=thrd)
+            st.session_state.thread = st.session_state.client.beta.threads.create()
             my_assistants = st.session_state.client.beta.assistants.list()
             st.session_state.asst_list={}
             for i in range(len(my_assistants.data)):
