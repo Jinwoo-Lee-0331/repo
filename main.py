@@ -108,14 +108,6 @@ def main():
             st.markdown("""ℹ️
             [프롬프트 작성 Tip](https://platform.openai.com/docs/guides/prompt-engineering)
             """)
-            st.session_state.asst = st.session_state.client.beta.assistants.update(
-                          'asst_tT5FZJESlwnysflUHlBwNC0x',
-                          instructions=system_prompt,
-                          name='kgt',
-                          # tools=[{"type": "retrieval"}],
-                          model="gpt-4",
-                          # file_ids=file_id,
-                        )
             
         elif genre == "***Imaga Generation***":       
             st.caption("⚠️ 회사 네트워크에서 보안 제한 - 외부 네트워크에서 사용해주세요")     
@@ -370,7 +362,15 @@ def main():
                 st.session_state.messages.append({"role": "assistant", "content": msg})
                 st.chat_message("assistant").write(msg)
                 
-            else:
+            else:                
+                st.session_state.asst = st.session_state.client.beta.assistants.update(
+                          'asst_tT5FZJESlwnysflUHlBwNC0x',
+                          instructions=system_prompt,
+                          name='kgt',
+                          # tools=[{"type": "retrieval"}],
+                          model="gpt-4",
+                          # file_ids=file_id,
+                        )
                 thread_message = st.session_state.client.beta.threads.messages.create(
                       st.session_state.thread.id,
                       role="user",
