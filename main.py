@@ -88,7 +88,7 @@ def main():
         if openai_api_key is not None:
             st.session_state.client = OpenAI(api_key=openai_api_key)
             thrd= st.session_state.key_tab.loc[st.session_state.key_tab['key_index'] == select_key,'thread'].reset_index(drop=True)[0]
-            st.write(thrd)
+            st.write(type(thrd))
             st.session_state.thread = st.session_state.client.beta.threads.retrieve(thrd)
             my_assistants = st.session_state.client.beta.assistants.list()
             st.session_state.asst_list={}
