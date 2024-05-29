@@ -427,7 +427,7 @@ def main():
 
                 with st.session_state.client.beta.threads.runs.stream(
                     thread_id=st.session_state.thread.id,
-                    assistant_id=st.session_state.asst.id
+                    assistant_id=st.session_state.asst.id,
                     event_handler=EventHandler(),
                 ) as stream:
                     stream.until_done()
