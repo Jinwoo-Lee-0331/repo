@@ -86,7 +86,7 @@ def main():
             st.error("key index or password is wrong")
 
         if openai_api_key is not None:
-            st.session_state.client = OpenAI(api_key=openai_api_key)
+            st.session_state.client = OpenAI(api_key=openai_api_key, default_headers={"OpenAI-Beta": "assistants=v2"})
             thrd= st.session_state.key_tab.loc[st.session_state.key_tab['key_index'] == select_key,'thread'].reset_index(drop=True)[0]
             # st.write(thrd)
             st.session_state.thread = st.session_state.client.beta.threads.retrieve(thread_id=thrd)
