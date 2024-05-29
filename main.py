@@ -3,7 +3,7 @@ import numpy as np
 import requests
 from PIL import Image
 import io
-from openai import AssistantEventHandler, OpenAI
+from openai import OpenAI
 import base64
 from PIL import Image
 from streamlit_cropper import st_cropper
@@ -13,33 +13,6 @@ from audio_recorder_streamlit import audio_recorder
 from pydub import AudioSegment
 from io import BytesIO
 from io import StringIO
-
-from typing_extensions import override
- 
-# First, we create a EventHandler class to define
-# how we want to handle the events in the response stream.
- 
-class EventHandler(AssistantEventHandler):    
-  @override
-  def on_text_created(self, text) -> None:
-    print(f"\nassistant > ", end="", flush=True)
-      
-  @override
-  def on_text_delta(self, delta, snapshot):
-    print(delta.value, end="", flush=True)
-      
-  def on_tool_call_created(self, tool_call):
-    print(f"\nassistant > {tool_call.type}\n", flush=True)
-  
-  def on_tool_call_delta(self, delta, snapshot):
-    if delta.type == 'code_interpreter':
-      if delta.code_interpreter.input:
-        print(delta.code_interpreter.input, end="", flush=True)
-      if delta.code_interpreter.outputs:
-        print(f"\n\noutput >", flush=True)
-        for output in delta.code_interpreter.outputs:
-          if output.type == "logs":
-            print(f"\n{output.logs}", flush=True)
     
 def main():
     st.set_page_config(
@@ -424,23 +397,21 @@ def main():
                       content=prompt,
                 )
 
-                with st.session_state.client.beta.threads.runs.stream(
+                run = st.session_state.client.beta.threads.runs.create(
                     thread_id=st.session_state.thread.id,
-                    assistant_id=st.session_state.asst.id,
-                    event_handler=EventHandler(),
-                ) as stream:
-                    stream.until_done()
+                    assistant_id=st.session_state.asst.id
+                )
                 import time
                 
-                # while True:
-                #     run = st.session_state.client.beta.threads.runs.retrieve(
-                #         thread_id=st.session_state.thread.id,
-                #         run_id=run.id
-                #     )
-                #     if run.status == "completed":
-                #         break
-                #     else:
-                #         time.sleep(1)
+                while True:
+                    run = st.session_state.client.beta.threads.runs.retrieve(
+                        thread_id=st.session_state.thread.id,
+                        run_id=run.id
+                    )
+                    if run.status == "completed":
+                        break
+                    else:
+                        time.sleep(1)
 
                 thread_messages = st.session_state.client.beta.threads.messages.list(st.session_state.thread.id)
                 st.session_state.messages.append({"role": "assistant", "content": thread_messages.data[0].content[0].text.value})
