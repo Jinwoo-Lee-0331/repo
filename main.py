@@ -112,7 +112,8 @@ def main():
             """)
             
         elif genre == "***Imaga Generation***":       
-            st.caption("⚠️ 회사 네트워크에서 보안 제한 - 외부 네트워크에서 사용해주세요")     
+            # st.caption("⚠️ 회사 네트워크에서 보안 제한 - 외부 네트워크에서 사용해주세요")     
+            st.caption("원하는 이미지에 대한 설명을 해주세요")     
         elif genre == "***Text to Speech***":     
             voice = st.radio("Voice",['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer'],index=0)
         elif genre == "***Document based***":
