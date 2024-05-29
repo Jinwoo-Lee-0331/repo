@@ -371,7 +371,7 @@ def main():
                           instructions=system_prompt,
                           name='kgt',
                           # tools=[{"type": "retrieval"}],
-                          model = 'gpt-4o',
+                          model = 'gpt-4',
                           # file_ids=file_id,
                         )
                 thread_message = st.session_state.client.beta.threads.messages.create(
