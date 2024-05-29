@@ -365,15 +365,32 @@ def main():
                 st.session_state.messages.append({"role": "assistant", "content": msg})
                 st.chat_message("assistant").write(msg)
                 
-            else:                
-                st.session_state.asst = st.session_state.client.beta.assistants.update(
-                          'asst_tT5FZJESlwnysflUHlBwNC0x',
-                          instructions=system_prompt,
-                          name='kgt',
-                          # tools=[{"type": "retrieval"}],
-                          model = mdl,
-                          # file_ids=file_id,
-                        )
+            else:
+                if mdl == 'gpt-4':                    
+                    st.session_state.asst = st.session_state.client.beta.assistants.update(
+                              'asst_tT5FZJESlwnysflUHlBwNC0x',
+                              instructions=system_prompt,
+                              name='kgt',
+                              # tools=[{"type": "retrieval"}],
+                              model = mdl,
+                              # file_ids=file_id,
+                            )
+                elif mdl == 'gpt-3.5-turbo':             
+                    st.session_state.asst = st.session_state.client.beta.assistants.update(
+                              'asst_oOBne3Yun3PeM8scP3Hz7kBb',
+                              instructions=system_prompt,
+                              name='gpt35turbo',
+                              model = mdl,
+                            )
+                else:             
+                    st.session_state.asst = st.session_state.client.beta.assistants.update(
+                              'asst_lfDdn9kjZlQNJnoAArTYnAsj',
+                              instructions=system_prompt,
+                              name='gpt4o',
+                              model = mdl,
+                            )
+
+                
                 thread_message = st.session_state.client.beta.threads.messages.create(
                       st.session_state.thread.id,
                       role="user",
