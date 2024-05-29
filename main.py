@@ -99,6 +99,7 @@ def main():
     ###############################################################
         
         if genre == "***Text Generation***":
+            mdl = st.radio("Model",['gpt-3.5-turbo', 'gpt-4', 'gpt-4o'],index=0)
             system_prompt = st.text_area(
             "System Prompt",
             "당신은 유능한 조수입니다. 당신은 구글에서 정보를 찾을 수 있고 그 정보를 바탕으로 답변을 해줄 수 있습니다. 관련 정보를 찾으면 해당 url과 사진 등을 제시해주세요.",
@@ -274,7 +275,7 @@ def main():
                 
             elif genre == "***Vision***":
                 payload = {
-                  "model": "gpt-4-vision-preview",
+                  "model": "gpt-4o",
                   "messages": [
                     {
                       "role": "user",
@@ -369,7 +370,7 @@ def main():
                           instructions=system_prompt,
                           name='kgt',
                           # tools=[{"type": "retrieval"}],
-                          model="gpt-4",
+                          model = mdl,
                           # file_ids=file_id,
                         )
                 thread_message = st.session_state.client.beta.threads.messages.create(
