@@ -3,7 +3,7 @@ import numpy as np
 import requests
 from PIL import Image
 import io
-from openai import OpenAI
+from openai import AssistantEventHandler, OpenAI
 import base64
 from PIL import Image
 from streamlit_cropper import st_cropper
@@ -15,7 +15,6 @@ from io import BytesIO
 from io import StringIO
 
 from typing_extensions import override
-from openai import AssistantEventHandler
  
 # First, we create a EventHandler class to define
 # how we want to handle the events in the response stream.
