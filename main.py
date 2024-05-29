@@ -384,9 +384,9 @@ def main():
                             )
                 else:             
                     st.session_state.asst = st.session_state.client.beta.assistants.update(
-                              'asst_lHhiqkoc8RHXpFsi6u9CtDi0',
+                              'asst_1xLJcAV3GTYEBF6NuYJNPzsw',
                               instructions=system_prompt,
-                              name='gpt4o',
+                              name='gpt--4o',
                               model = mdl,
                             )
 
